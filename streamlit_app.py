@@ -62,8 +62,8 @@ elif page == "Animals":
                 "Sex": sex,
                 "Pregnant?": pregnancy,
                 "Notes": notes,
-                "Next Action": next_action,
-                "Action Date": action_date
+                "Next Experiment": next_exp,
+                "Experiment Date": exp_date
             }
             data = pd.concat([data, pd.DataFrame([new_row])], ignore_index=True)
             data.to_csv("rat_data.csv", index=False)
