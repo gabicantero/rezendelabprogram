@@ -16,12 +16,47 @@ def load_data():
 data = load_data()
 
 # Barra lateral com opções de navegação
-page = st.sidebar.selectbox("Navigation", ["Home", "Cages", "Projects",])
+page = st.sidebar.selectbox("Navigation", ["Home", "Add Animal", "Cages", "Projects",])
 
 # Página: Home
 if page == "Home":
     st.subheader("Welcome to the Rat Cage Manager App!")
     st.markdown("Use the sidebar to navigate between pages.")
+
+elif page == "Add Animal":
+    st.subheader("🐭 Add a New Animal")
+
+    with st.form("add_animal_form"):
+        id = st.text_input("Animal ID")
+        project = st.text_input("Project")
+        cage = st.text_input("Cage Number")
+        dob = st.date_input("Date of Birth")
+        sex = st.selectbox("Sex", ["Male", "Female"])
+        notes = st.text_area("Notes")
+        next_action = st.text_input("Next Action")
+        action_date = st.date_input("Action Date")
+
+        submit = st.form_submit_button("Add Animal")
+
+        if submit:
+            new_data = pd.DataFrame([{
+                "ID": id,
+                "Project": project,
+                "Cage": cage,
+                "DOB": dob,
+                "Sex": sex,
+                "Notes": notes,
+                "Next Action": next_action,
+                "Action Date": action_date
+            }])
+            try:
+                existing_data = pd.read_csv("rat_data.csv")
+                updated_data = pd.concat([existing_data, new_data], ignore_index=True)
+            except FileNotFoundError:
+                updated_data = new_data
+
+            updated_data.to_csv("rat_data.csv", index=False)
+            st.success(f"Animal {id} added successfully!")
 
 # Página: Cages
 elif page == "Cages":
