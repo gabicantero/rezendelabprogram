@@ -51,8 +51,8 @@ elif page == "Add Animal":
         dob = st.date_input("Date of Birth")
         sex = st.selectbox("Sex", ["Male", "Female"])
         notes = st.text_area("Notes")
-        next_action = st.text_input("Next Experiement")
-        action_date = st.date_input("Experiement Date")
+        next_experiement = st.text_input("Next Experiement")
+        experiement_date = st.date_input("Experiement Date")
 
         submit = st.form_submit_button("Add Animal")
 
@@ -64,8 +64,8 @@ elif page == "Add Animal":
                 "DOB": dob,
                 "Sex": sex,
                 "Notes": notes,
-                "Next Experiement": next_action,
-                "Experiement Date": action_date
+                "Next Experiement": next_experiement,
+                "Experiement Date": experiement_date
             }])
             try:
                 existing_data = pd.read_csv("rat_data.csv")
@@ -101,12 +101,12 @@ elif page == "Cages":
             dob = st.date_input("Date of Birth", pd.to_datetime(data.loc[selected_index, "DOB"]))
             sex = st.selectbox("Sex", ["Male", "Female"], index=0 if data.loc[selected_index, "Sex"] == "Male" else 1)
             notes = st.text_area("Notes", value=data.loc[selected_index, "Notes"])
-            next_action = st.text_input("Next Experiement", value=data.loc[selected_index, "Next Experiement"])
-            action_date = st.date_input("Experiement Date", pd.to_datetime(data.loc[selected_index, "Experiement Date"]))
+            next_experiement = st.text_input("Next Experiement", value=data.loc[selected_index, "Next Experiement"])
+            experiement_date = st.date_input("Experiement Date", pd.to_datetime(data.loc[selected_index, "Experiement Date"]))
 
             save_changes = st.form_submit_button("Save Changes")
             if save_changes:
-                data.loc[selected_index] = [id, project, cage, dob, sex, notes, next_action, action_date]
+                data.loc[selected_index] = [id, project, cage, dob, sex, notes, next_experiement, experiement_date]
                 data.to_csv("rat_data.csv", index=False)
                 st.success("Animal updated successfully!")
 
@@ -118,7 +118,7 @@ elif page == "Cages":
 
 # Página: Animals
 elif page == "Animals":
-    st.subheader("🐁 Animal Details")
+    st.subheader("Add a new animal")
 
     with st.form("add_animal"):
         st.markdown("### Add New Animal")
@@ -130,9 +130,23 @@ elif page == "Animals":
         sex = st.selectbox("Sex", ["Male", "Female", "F and M"])
         pregnancy = st.selectbox("Pregnant?", ["Yes","No"])
         notes = st.text_area("Notes")
-        next_exp = st.selectbox("Next Experiments", ['Milking', 'Gut Photoconversion', 'Limphonodes Photoconversion', 'Spleen Photoconversion', 'Gut Protocol', 'Brain, Meninges, Skull'])
+        next_experiement = st.selectbox("Next Experiments", ['Milking', 'Gut Photoconversion', 'Limphonodes Photoconversion', 'Spleen Photoconversion', 'Gut Protocol', 'Brain, Meninges, Skull'])
             
-        exp_date = st.date_input("Experiment Date")
+       experiement_date = st.checkbox("Add Experiment Date?")
+       if experiement_date:
+          experiement_date = st.date_input("Experiment Date")
+       else:
+          experiement_date = None
+
+      if pregnancy == "Yes":
+            edbp = st.date_input("Expected Date of Birth of the Puppies")
+            rdbp = st.date_input("Real Date of Birth of the Puppies")
+            weaning = st.date_input("Date of Weaning")
+
+        # Milking dates se next_action for Milking
+        if next_experiement.lower() == 'Milking':
+            milk_days = ['3', '6', '9', '12', '15', '17', '21']
+            milk_done = st.multiselect("Milking days done", milk_days)
 
         submitted = st.form_submit_button("Add Animal")
       
@@ -145,9 +159,28 @@ elif page == "Animals":
                 "Sex": sex,
                 "Pregnant?": pregnancy,
                 "Notes": notes,
-                "Next Experiment": next_exp,
-                "Experiment Date": exp_date
+                "Next Experiment": next_experiement,
+                "Experiment Date": experiement_date
             }
+
+        if pregnancy == "Yes":
+            new_row["Expected DOB Puppies"] = edbp
+            new_row["Real DOB Puppies"] = rdbp
+            new_row["Weaning Date"] = weaning
+
+        if next_experiement.lower() == 'Milking':
+            new_row["Milking Days Done"] = ",".join(milk_done)
+
+        try:
+            existing_data = pd.read_csv("rat_data.csv")
+            updated_data = pd.concat([existing_data, pd.DataFrame([new_row])], ignore_index=True)
+        except FileNotFoundError:
+            updated_data = pd.DataFrame([new_row])
+
+            updated_data.to_csv("rat_data.csv", index=False)
+            st.success(f"Animal {id} added successfully!")
+
+
             data = pd.concat([data, pd.DataFrame([new_row])], ignore_index=True)
             data.to_csv("rat_data.csv", index=False)
             st.success("New animal added successfully!")
