@@ -7,7 +7,7 @@ st.title("🐭 Rat Cage Manager")
 st.write("Welcome! This is your cage visualization and management system.")
 
 #DataSet
-def load_data()
+def load_data():
   try:
     return pd.read_csv("rat_data.csv")
     except FileNotFoundError:
