@@ -25,8 +25,39 @@ if page == "Home":
 
 # Página: Cages
 elif page == "Cages":
-    st.subheader("🔲 Cage Grid")
-    st.dataframe(data)
+    st.subheader("🔲 Cage Overview")
+
+    if data.empty:
+        st.info("No animals registered yet.")
+    else:
+        selected_index = st.selectbox("Select an animal to edit", data.index, format_func=lambda x: f"{data.loc[x, 'ID']} - Cage {data.loc[x, 'Cage']}")
+        
+        # Mostrar informações atuais
+        st.write("### Current Information")
+        st.write(data.loc[selected_index])
+
+        # Formulário de edição
+        with st.form("edit_animal"):
+            id = st.text_input("Animal ID", value=data.loc[selected_index, "ID"])
+            project = st.text_input("Project", value=data.loc[selected_index, "Project"])
+            cage = st.text_input("Cage Number", value=data.loc[selected_index, "Cage"])
+            dob = st.date_input("Date of Birth", pd.to_datetime(data.loc[selected_index, "DOB"]))
+            sex = st.selectbox("Sex", ["Male", "Female"], index=0 if data.loc[selected_index, "Sex"] == "Male" else 1)
+            notes = st.text_area("Notes", value=data.loc[selected_index, "Notes"])
+            next_action = st.text_input("Next Experiement", value=data.loc[selected_index, "Next Experiement"])
+            action_date = st.date_input("Experiement Date", pd.to_datetime(data.loc[selected_index, "Experiement Date"]))
+
+            save_changes = st.form_submit_button("Save Changes")
+            if save_changes:
+                data.loc[selected_index] = [id, project, cage, dob, sex, notes, next_action, action_date]
+                data.to_csv("rat_data.csv", index=False)
+                st.success("Animal updated successfully!")
+
+        # Botão para deletar
+        if st.button("Delete Animal", type="primary"):
+            data = data.drop(selected_index)
+            data.to_csv("rat_data.csv", index=False)
+            st.warning("Animal deleted successfully!")
 
 # Página: Animals
 elif page == "Animals":
