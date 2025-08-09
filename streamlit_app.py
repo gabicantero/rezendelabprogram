@@ -10,8 +10,8 @@ st.write("Welcome! This is your cage visualization and management system.")
 def load_data():
   try:
     return pd.read_csv("rat_data.csv")
-    except FileNotFoundError:
-        return pd.DataFrame(columns=["ID", "Project", "Cage", "DOB", "Sex", "Notes", "Next Action", "Action Date"])
+  except FileNotFoundError:
+      return pd.DataFrame(columns=["ID", "Project", "Cage", "DOB", "Sex", "Notes", "Next Action", "Action Date"])
 
 data = load_data()
 
