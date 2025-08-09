@@ -41,11 +41,6 @@ elif page == "Animals":
         eutha = st.date_input("Date of Euthanasia")
         sex = st.selectbox("Sex", ["Male", "Female", "F and M"])
         pregnancy = st.selectbox("Pregnant?", ["Yes","No"])
-            if pregnancy == "Yes":
-              edbp = st.date_input("Expected Date of Birth of the Puppies")
-              rdbp = st.date_input("Real Date of Birth of the Puppies")
-              weaning = st.date_input("Date of Weaning")
-              
         notes = st.text_area("Notes")
         next_exp = st.selectbox("Next Experiments", ['Milking', 'Gut Photoconversion', 'Limphonodes Photoconversion', 'Spleen Photoconversion', 'Gut Protocol', 'Brain, Meninges, Skull'])
             
