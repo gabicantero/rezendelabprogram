@@ -132,10 +132,10 @@ elif page == "Animals":
         notes = st.text_area("Notes")
         next_experiement = st.selectbox("Next Experiments", ['Milking', 'Gut Photoconversion', 'Limphonodes Photoconversion', 'Spleen Photoconversion', 'Gut Protocol', 'Brain, Meninges, Skull'])
             
-       experiement_date = st.checkbox("Add Experiment Date?")
-       if experiement_date:
+        experiement_date = st.checkbox("Add Experiment Date?")
+        if experiement_date:
           experiement_date = st.date_input("Experiment Date")
-       else:
+        else:
           experiement_date = None
 
       if pregnancy == "Yes":
