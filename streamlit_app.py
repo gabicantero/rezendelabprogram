@@ -28,13 +28,13 @@ elif page == "Add Animal":
 
     with st.form("add_animal_form"):
         id = st.text_input("Animal ID")
-        project = st.text_input("Project")
+        project = st.selectbox("Project", ["Alzheimer's and (γδ) T cells", "CD3 Project", "Jax X Tac Breastmilk")
         cage = st.text_input("Cage Number")
         dob = st.date_input("Date of Birth")
         sex = st.selectbox("Sex", ["Male", "Female"])
         notes = st.text_area("Notes")
-        next_action = st.text_input("Next Action")
-        action_date = st.date_input("Action Date")
+        next_action = st.text_input("Next Experiement")
+        action_date = st.date_input("Experiement Date")
 
         submit = st.form_submit_button("Add Animal")
 
