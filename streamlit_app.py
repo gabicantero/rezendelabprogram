@@ -15,6 +15,16 @@ def load_data():
 
 data = load_data()
 
+def load_projects():
+    try:
+        projects_df = pd.read_csv("projects.csv")
+        return projects_df["Project"].tolist()
+    except FileNotFoundError:
+        return ["Alzheimer's and (γδ) T cells", "CD3 Project", "Jax X Tac Breastmilk"]
+
+data = load_data()
+projects_list = load_projects()
+
 # Barra lateral com opções de navegação
 page = st.sidebar.selectbox("Navigation", ["Home", "Add Animal", "Cages", "Projects",])
 
@@ -28,7 +38,7 @@ elif page == "Add Animal":
 
     with st.form("add_animal_form"):
         id = st.text_input("Animal ID")
-        project = st.selectbox("Project", ["Alzheimer's and (γδ) T cells", "CD3 Project", "Jax X Tac Breastmilk")
+        project = st.selectbox("Project", projects_list)
         cage = st.text_input("Cage Number")
         dob = st.date_input("Date of Birth")
         sex = st.selectbox("Sex", ["Male", "Female"])
@@ -65,16 +75,20 @@ elif page == "Cages":
     if data.empty:
         st.info("No animals registered yet.")
     else:
+        filter_projects = ["All"] + projects_list
+        selected_project = st.selectbox("Filter by project", filter_projects)
+        if selected_project != "All":
+            data = data[data["Project"] == selected_project]
         selected_index = st.selectbox("Select an animal to edit", data.index, format_func=lambda x: f"{data.loc[x, 'ID']} - Cage {data.loc[x, 'Cage']}")
         
         # Mostrar informações atuais
-        st.write("### Current Information")
+        st.write("Current Information")
         st.write(data.loc[selected_index])
 
         # Formulário de edição
         with st.form("edit_animal"):
             id = st.text_input("Animal ID", value=data.loc[selected_index, "ID"])
-            project = st.selectbox("Filter by project", data["Project"].unique())
+            project = st.selectbox("Project", projects_list, index=projects_list.index(data.loc[selected_index, "Project"]))
             cage = st.text_input("Cage Number", value=data.loc[selected_index, "Cage"])
             dob = st.date_input("Date of Birth", pd.to_datetime(data.loc[selected_index, "DOB"]))
             sex = st.selectbox("Sex", ["Male", "Female"], index=0 if data.loc[selected_index, "Sex"] == "Male" else 1)
