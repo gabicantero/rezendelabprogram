@@ -138,7 +138,7 @@ elif page == "Animals":
         else:
           experiement_date = None
 
-      if pregnancy == "Yes":
+        if pregnancy == "Yes":
             edbp = st.date_input("Expected Date of Birth of the Puppies")
             rdbp = st.date_input("Real Date of Birth of the Puppies")
             weaning = st.date_input("Date of Weaning")
