@@ -46,8 +46,8 @@ elif page == "Add Animal":
                 "DOB": dob,
                 "Sex": sex,
                 "Notes": notes,
-                "Next Action": next_action,
-                "Action Date": action_date
+                "Next Experiement": next_action,
+                "Experiement Date": action_date
             }])
             try:
                 existing_data = pd.read_csv("rat_data.csv")
@@ -74,7 +74,7 @@ elif page == "Cages":
         # Formulário de edição
         with st.form("edit_animal"):
             id = st.text_input("Animal ID", value=data.loc[selected_index, "ID"])
-            project = st.text_input("Project", value=data.loc[selected_index, "Project"])
+            project = st.selectbox("Filter by project", data["Project"].unique())
             cage = st.text_input("Cage Number", value=data.loc[selected_index, "Cage"])
             dob = st.date_input("Date of Birth", pd.to_datetime(data.loc[selected_index, "DOB"]))
             sex = st.selectbox("Sex", ["Male", "Female"], index=0 if data.loc[selected_index, "Sex"] == "Male" else 1)
