@@ -25,6 +25,14 @@ def load_projects():
 data = load_data()
 projects_list = load_projects()
 
+new_project = st.text_input("Or add a new project")
+if new_project:
+    if new_project not in projects_list:
+        projects_list.append(new_project)
+        pd.DataFrame({"Project": projects_list}).to_csv("projects.csv", index=False)
+        st.success(f"Project '{new_project}' added successfully!")
+        project = new_project
+
 # Barra lateral com opções de navegação
 page = st.sidebar.selectbox("Navigation", ["Home", "Add Animal", "Cages", "Projects",])
 
