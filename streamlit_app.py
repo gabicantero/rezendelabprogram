@@ -199,7 +199,6 @@ elif page == "Cages":
 
 # === PROJECTS ===
 elif page == "Projects":
-    global projects_df
     st.subheader("📁 Projects")
     
     for idx, row in projects_df.iterrows():
