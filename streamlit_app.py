@@ -215,4 +215,64 @@ elif page == "Cages":
 
 elif page == "Projects":
     st.subheader("📁 Projects")
-    st.write("Project management functionality coming soon.")
+    st.subheader("📁 Projects")
+
+    # Carregar dados dos projetos
+    try:
+        projects_df = pd.read_csv("projects.csv")
+    except FileNotFoundError:
+        # Se não existir, cria um DataFrame vazio com colunas padrão
+        projects_df = pd.DataFrame(columns=["Project", "Description", "Experiment 1", "Experiment 2", "Experiment 3"])
+
+    # Mostrar lista de projetos como accordion expansível
+    for idx, row in projects_df.iterrows():
+        with st.expander(f"📂 {row['Project']}"):
+            # Mostrar descrição com possibilidade de editar
+            new_desc = st.text_area("Description", value=row["Description"], key=f"desc_{idx}")
+
+            # Tracker simples para experimentos
+            st.write("Experiment Progress:")
+            exp_cols = [col for col in projects_df.columns if col.startswith("Experiment")]
+            # Mostrar checkboxes para cada experimento
+            exp_status = []
+            for col in exp_cols:
+                done = bool(row[col] == "Done")
+                checked = st.checkbox(col, value=done, key=f"exp_{idx}_{col}")
+                exp_status.append(checked)
+
+            # Botão para salvar alterações no projeto
+            if st.button("Save changes", key=f"save_proj_{idx}"):
+                projects_df.at[idx, "Description"] = new_desc
+                # Atualiza status dos experimentos
+                for i, col in enumerate(exp_cols):
+                    projects_df.at[idx, col] = "Done" if exp_status[i] else ""
+                projects_df.to_csv("projects.csv", index=False)
+                st.success(f"Project '{row['Project']}' updated!")
+
+    st.markdown("---")
+    st.subheader("Add New Project")
+
+    with st.form("add_project_form"):
+        new_proj_name = st.text_input("Project Name")
+        new_proj_desc = st.text_area("Project Description")
+        # Supondo 3 experimentos iniciais vazios
+        submit_new_proj = st.form_submit_button("Add Project")
+
+        if submit_new_proj:
+            if new_proj_name.strip() == "":
+                st.error("Project name cannot be empty.")
+            else:
+                # Verifica se já existe
+                if new_proj_name in projects_df["Project"].values:
+                    st.error("Project with this name already exists.")
+                else:
+                    new_row = {
+                        "Project": new_proj_name,
+                        "Description": new_proj_desc,
+                        "Experiment 1": "",
+                        "Experiment 2": "",
+                        "Experiment 3": ""
+                    }
+                    projects_df = pd.concat([projects_df, pd.DataFrame([new_row])], ignore_index=True)
+                    projects_df.to_csv("projects.csv", index=False)
+                    st.success(f"Project '{new_proj_name}' added!")
