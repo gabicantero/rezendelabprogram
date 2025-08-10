@@ -291,7 +291,6 @@ elif page == "Projects":
         submit_new_proj = st.form_submit_button("Add Project")
 
         if submit_new_proj:
-            global projects_df
             if new_proj_name.strip() == "":
                 st.error("Project name cannot be empty.")
             elif new_proj_name in projects_df["Project"].values:
