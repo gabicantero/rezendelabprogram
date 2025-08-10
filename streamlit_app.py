@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import datetime as datetime
+import datetime as datetime, date 
 
 st.set_page_config(page_title="Rat Cage Manager", layout="wide")
 st.title("🐭 Rat Cage Manager")
@@ -238,7 +238,7 @@ elif page == "Projects":
                     exp_date = pd.to_datetime(exp_date_str).date() if exp_date_str else None
                 except:
                     exp_date = None
-                exp_date = st.date_input(f"Planned Date for Experiment {num}", value=exp_date if exp_date else datetime.today().date(), key=f"exp_date_{idx}_{num}")
+                exp_date = st.date_input(f"Planned Date for Experiment {i}", value=datetime.today().date(), key=f"new_exp_date_{i}")
                 exp_done = st.checkbox("Done", value=bool(row.get(exp_done_col, False)), key=f"exp_done_{idx}_{num}")
 
                 exp_names.append(exp_name)
