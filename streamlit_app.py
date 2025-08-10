@@ -207,14 +207,11 @@ elif page == "Cages":
 
             save_changes = st.form_submit_button("Save Changes")
 
-           if save_changes:
-        # Código para salvar as alterações
-       
-           data.loc[selected_animal_index] = [
-                 id, project, cage, ...
-           ]
-          data.to_csv("rat_data.csv", index=False)
-          st.success("Animal updated successfully!")
+            if save_changes:
+        # tudo aqui dentro indentado com 4 espaços a mais que o 'if'
+                data.loc[selected_animal_index] = [...]
+                data.to_csv("rat_data.csv", index=False)
+                st.success("Animal updated successfully!")
 
 elif page == "Projects":
     st.subheader("📁 Projects")
