@@ -184,7 +184,7 @@ elif page == "Cages":
                 milk_done = []
                 if next_action.lower() == "milking":
                     milk_days = ['3', '6', '9', '12', '15', '17', '21']
-                    milk_done_str = row.get("Milking Days Done", "")
+                    milk_done_str = str(row.get("Milking Days Done", ""))
                     milk_done = milk_done_str.split(",") if milk_done_str else []
                     milk_done = st.multiselect("Milking days done", milk_days, default=milk_done)
 
@@ -204,6 +204,17 @@ elif page == "Cages":
                 data.to_csv("rat_data.csv", index=False)
                 st.warning("Animal deleted successfully!")
                 st.session_state.show_edit = False
+
+            save_changes = st.form_submit_button("Save Changes")
+
+           if save_changes:
+        # Código para salvar as alterações
+       
+           data.loc[selected_animal_index] = [
+              id, project, cage, ...
+              ]
+          data.to_csv("rat_data.csv", index=False)
+          st.success("Animal updated successfully!")
 
 elif page == "Projects":
     st.subheader("📁 Projects")
