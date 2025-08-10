@@ -215,7 +215,6 @@ elif page == "Cages":
 
 elif page == "Projects":
     st.subheader("📁 Projects")
-    st.subheader("📁 Projects")
 
     # Carregar dados dos projetos
     try:
