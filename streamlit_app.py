@@ -200,6 +200,7 @@ elif page == "Cages":
 # === PROJECTS ===
 elif page == "Projects":
     st.subheader("📁 Projects")
+    global projects_df
 
     for idx, row in projects_df.iterrows():
         with st.expander(f"📂 {row['Project']}"):
