@@ -296,4 +296,11 @@ elif page == "Projects":
                 exp_dones.append(exp_done)
 
             if st.button("Save changes", key=f"save_proj_{idx}"):
-                projects_df.at[idx, "Project"] =
+                projects_df.at[idx, "Project"] = new_name
+                projects_df.at[idx, "Description"] = new_desc
+                for i, num in enumerate(exp_nums):
+                    projects_df.at[idx, f"Exp{num} Name"] = exp_names[i]
+                    projects_df.at[idx, f"Exp{num} Date"] = exp_dates[i].strftime("%Y-%m-%d") if exp_dates[i] else ""
+                    projects_df.at[idx, f"Exp{num} Done"] = exp_dones[i]
+                save_projects(projects_df)
+                st.success(f"Project '{new_name}' updated!")
