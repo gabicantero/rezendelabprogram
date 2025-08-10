@@ -242,11 +242,11 @@ elif page == "Cages":
 elif page == "Projects":
     st.subheader("📁 Projects")
     for idx, row in projects_df.iterrows():
-    with st.expander(f"📂 {row['Project']}"):
+        with st.expander(f"📂 {row['Project']}"):
         # Nome projeto (editable)
-        new_name = st.text_input("Project Name", value=row["Project"], key=f"proj_name_{idx}")
+            new_name = st.text_input("Project Name", value=row["Project"], key=f"proj_name_{idx}")
         # Descrição (editable)
-        new_desc = st.text_area("Description", value=row.get("Description", ""), key=f"desc_{idx}")
+            new_desc = st.text_area("Description", value=row.get("Description", ""), key=f"desc_{idx}")
 
         # Detectar experimentos (pares de colunas)
         exp_nums = []
