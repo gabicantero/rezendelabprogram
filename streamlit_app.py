@@ -211,8 +211,8 @@ elif page == "Cages":
         # Código para salvar as alterações
        
            data.loc[selected_animal_index] = [
-              id, project, cage, ...
-              ]
+                 id, project, cage, ...
+           ]
           data.to_csv("rat_data.csv", index=False)
           st.success("Animal updated successfully!")
 
