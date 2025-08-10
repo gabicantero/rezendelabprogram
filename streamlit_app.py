@@ -303,36 +303,36 @@ elif page == "Projects":
             save_projects(projects_df)
             st.success(f"Project '{new_name}' updated!")
 
-st.markdown("---")
+        st.markdown("---")
 
 # === ADICIONAR NOVO PROJETO ===
-st.subheader("Add New Project")
+        st.subheader("Add New Project")
 
-with st.form("add_project_form"):
-    new_proj_name = st.text_input("Project Name")
-    new_proj_desc = st.text_area("Project Description")
-    n_exp = st.number_input("Number of Experiments", min_value=1, max_value=10, value=3, step=1)
+        with st.form("add_project_form"):
+            new_proj_name = st.text_input("Project Name")
+            new_proj_desc = st.text_area("Project Description")
+            n_exp = st.number_input("Number of Experiments", min_value=1, max_value=10, value=3, step=1)
 
     # Criar listas para experimento (nome, data)
-    new_exp_names = []
-    new_exp_dates = []
-    for i in range(1, n_exp+1):
-        new_exp_names.append(st.text_input(f"Experiment {i} Name", key=f"new_exp_name_{i}"))
-        new_exp_dates.append(st.date_input(f"Planned Date for Experiment {i}", value=datetime.today().date(), key=f"new_exp_date_{i}"))
+        new_exp_names = []
+        new_exp_dates = []
+        for i in range(1, n_exp+1):
+            new_exp_names.append(st.text_input(f"Experiment {i} Name", key=f"new_exp_name_{i}"))
+            new_exp_dates.append(st.date_input(f"Planned Date for Experiment {i}", value=datetime.today().date(), key=f"new_exp_date_{i}"))
 
-    submit_new_proj = st.form_submit_button("Add Project")
+        submit_new_proj = st.form_submit_button("Add Project")
 
-    if submit_new_proj:
-        if new_proj_name.strip() == "":
-            st.error("Project name cannot be empty.")
-        elif new_proj_name in projects_df["Project"].values:
+        if submit_new_proj:
+            if new_proj_name.strip() == "":
+                st.error("Project name cannot be empty.")
+            elif new_proj_name in projects_df["Project"].values:
             st.error("Project with this name already exists.")
-        else:
+            else:
             # Criar dict para novo projeto com colunas básicas
-            new_row = {
-                "Project": new_proj_name,
-                "Description": new_proj_desc,
-            }
+                new_row = {
+                    "Project": new_proj_name,
+                    "Description": new_proj_desc,
+                }
             # Adicionar experimentos no formato: Exp1 Name, Exp1 Date, Exp1 Done
             for i in range(1, n_exp+1):
                 new_row[f"Exp{i} Name"] = new_exp_names[i-1]
