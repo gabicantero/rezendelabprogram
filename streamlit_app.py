@@ -250,18 +250,18 @@ elif page == "Projects":
             new_desc = st.text_area("Description", value=row.get("Description", ""), key=f"desc_{idx}")
 
         # Detectar experimentos (pares de colunas)
-     exp_nums = []
-        for col in projects_df.columns:
+         exp_nums = []
+         for col in projects_df.columns:
             if col.startswith("Exp") and "Name" in col:
                 # extrair número
                 num = col.replace("Name", "").strip()
                 exp_nums.append(num)
-        exp_nums = sorted(exp_nums, key=lambda x: int(x))
+         exp_nums = sorted(exp_nums, key=lambda x: int(x))
 
-        st.markdown("### Experiments")
-        exp_names = []
-        exp_dates = []
-        exp_dones = []
+         st.markdown("### Experiments")
+         exp_names = []
+         exp_dates = []
+         exp_dones = []
 
         for num in exp_nums:
             exp_name_col = f"Exp{num} Name"
