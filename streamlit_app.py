@@ -3,7 +3,7 @@ import pandas as pd
 import datetime
 
 st.set_page_config(page_title="Rat Cage Manager", layout="wide")
-st.title("🐭 Rat Cage Manager")
+st.title("Animal Cage Manager")
 
 # ====== Funções para carregar/salvar dados ======
 def load_data():
