@@ -44,7 +44,7 @@ page = st.sidebar.selectbox("Navigation", ["Home", "Add Animal", "Cages", "Proje
 
 # ====== Página Home ======
 if page == "Home":
-    st.subheader("Welcome to the Rat Cage Manager App!")
+    st.subheader("Welcome to the Rezende's Lab Animal Manager App!")
     st.markdown("Use the sidebar to navigate between pages.")
 
 # ====== Página Add Animal ======
@@ -59,6 +59,7 @@ elif page == "Add Animal":
     pregnancy = st.selectbox("Pregnant?", ["No", "Yes"])
     notes = st.text_area("Notes")
     next_action = st.text_input("Next Experiment")
+    bree_expe = st.selectbox("Breeder or Experimental?", ["Breeder", "Experimental","None"])
 
     add_exp_date = st.checkbox("Add Experiment Date?")
     action_date = None
@@ -73,7 +74,7 @@ elif page == "Add Animal":
 
     milk_done = []
     if next_action.lower() == "milking":
-        milk_days = ['3', '6', '9', '12', '15', '17', '21']
+        milk_days = ['1','2','3','4','5', '6','7','8', '9','10','11', '12','13','14', '15','16' '17','18','19','20' '21']
         milk_done = st.multiselect("Milking days done", milk_days)
 
     if st.button("Add Animal"):
@@ -86,6 +87,7 @@ elif page == "Add Animal":
             "Pregnant?": pregnancy,
             "Notes": notes,
             "Next Experiment": next_action,
+            "Breeder or Experimental?": bree_expe,
             "Experiment Date": action_date,
             "Expected DOB Puppies": edbp,
             "Real DOB Puppies": rdbp,
@@ -115,7 +117,7 @@ elif page == "Cages":
             filtered_data = data[data["Project"] == selected_project]
 
         st.write("### Animals in project:")
-        st.dataframe(filtered_data[["ID", "Cage", "Sex", "DOB", "Next Experiment"]])
+        st.dataframe(filtered_data[["ID", "Cage", "Sex", "Breeder or Experimental?", "DOB", "Next Experiment"]])
 
         selected_animal_index = st.selectbox(
             "Select an animal to edit",
@@ -140,6 +142,7 @@ elif page == "Cages":
                 pregnancy = st.selectbox("Pregnant?", ["No", "Yes"], index=0 if row["Pregnant?"] == "No" else 1)
                 notes = st.text_area("Notes", value=row["Notes"])
                 next_action = st.text_input("Next Experiment", value=row["Next Experiment"])
+                bree_expe - st.selectbox("Breeder or Experimental", ["Breeder","Experimental","None"], index=0 if row["Breeder or Experimental"] == "Breeder" else 1)
 
                 add_exp_date = st.checkbox("Add Experiment Date?", value=pd.notnull(row["Experiment Date"]))
                 action_date = None
@@ -180,7 +183,7 @@ elif page == "Cages":
                 if save_changes:
                     data.loc[selected_animal_index] = [
                         id, project, cage, dob, sex, pregnancy, notes,
-                        next_action, action_date, edbp, rdbp, weaning,
+                        next_action, bree_expe, action_date, edbp, rdbp, weaning,
                         ",".join(milk_done) if milk_done else None
                     ]
                     save_data(data)
