@@ -211,7 +211,7 @@ elif page == "Projects":
     st.subheader("📁 Projects")
 
     for idx, row in projects_df.iterrows():
-    with st.expander(f"📂 {row['Project']}"):
+        with st.expander(f"📂 {row['Project']}"):
         st.write(f"**Description:** {row['Description']}")
 
         # Pega colunas de experimentos daquele projeto
