@@ -29,7 +29,6 @@ def save_projects(df):
     df.to_csv(PROJECTS_PATH, index=False)
 
 # Carrega os dados no início da página
-projects_df = load_projects()
 
 # Sessão para controlar adicionar experimentos no form
 if "new_exp_count" not in st.session_state:
