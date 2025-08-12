@@ -30,6 +30,31 @@ def save_data(df):
 def save_projects(df):
     df.to_csv("projects.csv", index=False)
 
+def normalize_projects_df(df):
+    max_exps = 0
+    for col in df.columns:
+        if col.startswith("Exp") and "Name" in col:
+            try:
+                n = int(col.replace("Exp", "").replace("Name", "").strip())
+                if n > max_exps:
+                    max_exps = n
+            except:
+                pass
+    # Cria colunas faltantes
+    for i in range(1, max_exps +1):
+        for suffix in ["Name", "Date", "Done"]:
+            col_name = f"Exp{i} {suffix}"
+            if col_name not in df.columns:
+                if suffix == "Done":
+                    df[col_name] = False
+                else:
+                    df[col_name] = ""
+    return df
+
+projects_df = normalize_projects_df(projects_df)
+st.session_state.projects_df = projects_df
+
+
 # ====== Carrega dados ======
 data = load_data()
 projects_df = load_projects()
@@ -108,13 +133,10 @@ elif page == "Cages":
     if data.empty:
         st.info("No animals registered yet.")
     else:
-        filter_projects = ["All"] + projects_list
-        selected_project = st.selectbox("Filter by project", filter_projects)
+        projects_list = projects_df["Project"].dropna().unique().tolist()
+        projects_list = [p for p in projects_list if p.strip() != ""]
 
-        if selected_project == "All":
-            filtered_data = data.copy()
-        else:
-            filtered_data = data[data["Project"] == selected_project]
+        selected_project = st.selectbox("Filter by Project", ["All"] + projects_list)
 
         st.write("### Animals in project:")
         st.dataframe(filtered_data[["ID", "Cage", "Sex", "Breeder or Experimental?", "DOB", "Next Experiment"]])
