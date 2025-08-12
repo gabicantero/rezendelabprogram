@@ -6,6 +6,14 @@ import os
 st.set_page_config(page_title="Rat Cage Manager", layout="wide")
 st.title("Animal Cage Manager")
 
+try:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+    BASE_DIR = os.getcwd()
+
+PROJECTS_PATH = os.path.join(BASE_DIR, "projects.csv")
+DATA_PATH = os.path.join(BASE_DIR, "data.csv")
+
 # ====== Funções para carregar/salvar dados ======
 def load_data():
     try:
@@ -17,12 +25,10 @@ def load_data():
         return pd.DataFrame(columns=cols)
 
 def load_projects():
-    if os.path.exists("projects.csv"):
-        return pd.read_csv("projects.csv")
+    if os.path.exists(PROJECTS_PATH):
+        return pd.read_csv(PROJECTS_PATH)
     else:
-        # Cria dataframe vazio com colunas básicas
-        columns = ["Project", "Description"]
-        return pd.DataFrame(columns=columns)
+        return pd.DataFrame()
 
 def save_projects(df):
     df.to_csv("projects.csv", index=False)
