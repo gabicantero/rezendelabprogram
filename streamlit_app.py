@@ -92,7 +92,7 @@ elif page == "Add Animal":
 
     milk_done = []
     if next_action.lower() == "milking":
-        milk_days = ['1','2','3','4','5', '6','7','8', '9','10','11', '12','13','14', '15','16' '17','18','19','20' '21']
+        milk_days = ['1','2','3','4','5', '6','7','8', '9','10','11', '12','13','14', '15','16','17','18','19','20' '21']
         milk_done = st.multiselect("Milking days done", milk_days)
 
     if st.button("Add Animal"):
@@ -131,6 +131,11 @@ elif page == "Cages":
 
         selected_project = st.selectbox("Filter by Project", ["All"] + projects_list)
 
+        if selected_project == "All":
+            filtered_data = data
+        else:
+            filtered_data = data[data["Project"] == selected_project]
+
         st.write("### Animals in project:")
         st.dataframe(filtered_data[["ID", "Cage", "Sex", "Breeder or Experimental?", "DOB", "Next Experiment"]])
 
@@ -157,7 +162,7 @@ elif page == "Cages":
                 pregnancy = st.selectbox("Pregnant?", ["No", "Yes"], index=0 if row["Pregnant?"] == "No" else 1)
                 notes = st.text_area("Notes", value=row["Notes"])
                 next_action = st.text_input("Next Experiment", value=row["Next Experiment"])
-                bree_expe - st.selectbox("Breeder or Experimental", ["Breeder","Experimental","None"], index=0 if row["Breeder or Experimental"] == "Breeder" else 1)
+                bree_expe = st.selectbox("Breeder or Experimental", ["Breeder","Experimental","None"], index=0 if row["Breeder or Experimental"] == "Breeder" else 1)
 
                 add_exp_date = st.checkbox("Add Experiment Date?", value=pd.notnull(row["Experiment Date"]))
                 action_date = None
