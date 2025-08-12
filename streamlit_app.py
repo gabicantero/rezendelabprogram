@@ -16,50 +16,25 @@ def load_data():
         return pd.DataFrame(columns=cols)
 
 def load_projects():
-    try:
-        df = pd.read_csv("projects.csv")
-        if df.empty:
-            df = pd.DataFrame(columns=["Project", "Description", "Paper Written?", "Paper Submitted?", "Journal Name", "Paper Link"])
-        return df
-    except FileNotFoundError:
-        return pd.DataFrame(columns=["Project", "Description", "Paper Written?", "Paper Submitted?", "Journal Name", "Paper Link"])
-
-def save_data(df):
-    df.to_csv("rat_data.csv", index=False)
+    if os.path.exists("projects.csv"):
+        return pd.read_csv("projects.csv")
+    else:
+        # Cria dataframe vazio com colunas básicas
+        columns = ["Project", "Description"]
+        return pd.DataFrame(columns=columns)
 
 def save_projects(df):
     df.to_csv("projects.csv", index=False)
 
-def ensure_project_columns(df):
-    if df is None or df.empty:
-        return df
+# Carrega os dados no início da página
+projects_df = load_projects()
 
-    # Encontre o maior número de experimentos pelas colunas
-    max_exp = 0
-    for col in df.columns:
-        if col.startswith("Exp") and "Name" in col:
-            try:
-                n = int(col.replace("Exp", "").replace("Name", "").strip())
-                if n > max_exp:
-                    max_exp = n
-            except:
-                pass
+# Sessão para controlar adicionar experimentos no form
+if "new_exp_count" not in st.session_state:
+    st.session_state.new_exp_count = 1
 
-    # Crie as colunas que faltam para cada experimento
-    for i in range(1, max_exp + 1):
-        for suffix in ["Name", "Date", "Done"]:
-            col_name = f"Exp{i} {suffix}"
-            if col_name not in df.columns:
-                if suffix == "Done":
-                    df[col_name] = False
-                else:
-                    df[col_name] = ""
-    return df
-
-
-# Depois de carregar projects_df, faça isso:
-projects_df = ensure_project_columns(projects_df)
-
+def save_data(df):
+    df.to_csv("rat_data.csv", index=False)
 
 # ====== Carrega dados ======
 data = load_data()
