@@ -284,9 +284,7 @@ elif page == "Projects":
             """, unsafe_allow_html=True)
 
     # Botão para adicionar experimentos fora do formulário
-    if st.button("Add Experiment"):
-        st.session_state.new_exp_count += 1
-
+  
     st.markdown("---")
     st.write("### Add New Project")
 
@@ -302,6 +300,10 @@ elif page == "Projects":
             exp_dates.append(st.date_input(f"Planned Date for Experiment {i+1}", key=f"new_exp_date_{i}"))
 
         submitted = st.form_submit_button("Add Project")
+        
+    if st.button("Add Experiment"):
+        st.session_state.new_exp_count += 1
+
 
         if submitted:
             # Validações básicas
