@@ -4,6 +4,7 @@ import datetime
 
 st.set_page_config(page_title="Rat Cage Manager", layout="wide")
 st.title("Animal Cage Manager")
+projects_df = normalize_projects_df(projects_df)
 
 # ====== Funções para carregar/salvar dados ======
 def load_data():
