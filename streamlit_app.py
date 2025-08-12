@@ -331,4 +331,4 @@ elif page == "Projects":
                 st.success(f"Project '{new_proj_name}' added!")
                 # Resetar lista de experimentos para novo projeto
                 st.session_state.new_proj_exp_list = []
-                st.experimental_rerun()
+            
