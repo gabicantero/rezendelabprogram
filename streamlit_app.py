@@ -4,7 +4,6 @@ import datetime
 
 st.set_page_config(page_title="Rat Cage Manager", layout="wide")
 st.title("Animal Cage Manager")
-projects_df = normalize_projects_df(projects_df)
 
 # ====== Funções para carregar/salvar dados ======
 def load_data():
@@ -31,18 +30,23 @@ def save_data(df):
 def save_projects(df):
     df.to_csv("projects.csv", index=False)
 
-def normalize_projects_df(df):
-    max_exps = 0
+def ensure_project_columns(df):
+    if df is None or df.empty:
+        return df
+
+    # Encontre o maior número de experimentos pelas colunas
+    max_exp = 0
     for col in df.columns:
         if col.startswith("Exp") and "Name" in col:
             try:
                 n = int(col.replace("Exp", "").replace("Name", "").strip())
-                if n > max_exps:
-                    max_exps = n
+                if n > max_exp:
+                    max_exp = n
             except:
                 pass
-    # Cria colunas faltantes
-    for i in range(1, max_exps +1):
+
+    # Crie as colunas que faltam para cada experimento
+    for i in range(1, max_exp + 1):
         for suffix in ["Name", "Date", "Done"]:
             col_name = f"Exp{i} {suffix}"
             if col_name not in df.columns:
@@ -52,8 +56,9 @@ def normalize_projects_df(df):
                     df[col_name] = ""
     return df
 
-projects_df = normalize_projects_df(projects_df)
-st.session_state.projects_df = projects_df
+
+# Depois de carregar projects_df, faça isso:
+projects_df = ensure_project_columns(projects_df)
 
 
 # ====== Carrega dados ======
