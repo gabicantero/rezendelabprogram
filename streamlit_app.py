@@ -16,15 +16,18 @@ def load_data():
                 "Real DOB Puppies", "Weaning Date", "Milking Days Done"]
         return pd.DataFrame(columns=cols)
 
-def load_projects():
-    try:
-        df = pd.read_csv("projects.csv")
-        if df.empty:
-            df = pd.DataFrame(columns=["Project", "Description", "Experiements"])
-        return df
-    except FileNotFoundError:
-        return pd.DataFrame(columns=["Project", "Description","])
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECTS_PATH = os.path.join(BASE_DIR, "projects.csv")
 
+def load_projects():
+    if os.path.exists(PROJECTS_PATH):
+        return pd.read_csv(PROJECTS_PATH)
+    else:
+        columns = ["Project", "Description"]
+        return pd.DataFrame(columns=columns)
+
+def save_projects(df):
+    df.to_csv(PROJECTS_PATH, index=False)
 
 # Carrega os dados no início da página
 
