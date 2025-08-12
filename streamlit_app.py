@@ -16,19 +16,23 @@ def load_data():
                 "Real DOB Puppies", "Weaning Date", "Milking Days Done"]
         return pd.DataFrame(columns=cols)
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECTS_PATH = os.path.join(BASE_DIR, "projects.csv")
-
 def load_projects():
-    if os.path.exists(PROJECTS_PATH):
-        return pd.read_csv(PROJECTS_PATH)
+    if os.path.exists("projects.csv"):
+        return pd.read_csv("projects.csv")
     else:
+        # Cria dataframe vazio com colunas básicas
         columns = ["Project", "Description"]
         return pd.DataFrame(columns=columns)
 
 def save_projects(df):
-    df.to_csv(PROJECTS_PATH, index=False)
+    df.to_csv("projects.csv", index=False)
 
+# Carrega os dados no início da página
+projects_df = load_projects()
+
+# Sessão para controlar adicionar experimentos no form
+if "new_exp_count" not in st.session_state:
+    st.session_state.new_exp_count = 1
 # Carrega os dados no início da página
 
 # Sessão para controlar adicionar experimentos no form
