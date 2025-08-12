@@ -283,7 +283,7 @@ elif page == "Projects":
                         new_row[f"Exp{i} Done"] = False
 
                     # Atualiza dataframe e salva
-                    global projects_df
+    
                     projects_df = pd.concat([projects_df, pd.DataFrame([new_row])], ignore_index=True)
                     save_projects(projects_df)
                     st.success(f"Project '{new_proj_name}' added!")
