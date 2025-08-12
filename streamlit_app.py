@@ -281,7 +281,7 @@ elif page == "Projects":
                     projects_df.at[idx, f"Exp{num} Date"] = exp_dates[i].strftime("%Y-%m-%d") if exp_dates[i] else ""
                     projects_df.at[idx, f"Exp{num} Done"] = exp_dones[i]
                 save_projects(projects_df)
-                st.success(f"Project '{new_name}' updated!")
+                st.experimental_rerun()
 
     st.markdown("---")
 
@@ -289,15 +289,14 @@ elif page == "Projects":
     if "new_proj_exp_list" not in st.session_state:
         st.session_state.new_proj_exp_list = []
 
-    # Função para adicionar novo experimento no formulário
-    def add_experiment():
-        st.session_state.new_proj_exp_list.append({"name": "", "date": ""})
-
-    st.button("+ Add Experiment", on_click=add_experiment)
-
     with st.form("add_project_form"):
+
         new_proj_name = st.text_input("Project Name")
         new_proj_desc = st.text_area("Project Description")
+
+        # Botão para adicionar experimento (dentro do form)
+        if st.form_submit_button("+ Add Experiment", on_click=lambda: st.session_state.new_proj_exp_list.append({"name": "", "date": ""})):
+            pass
 
         # Mostrar experimentos atuais no formulário
         for i, exp in enumerate(st.session_state.new_proj_exp_list):
@@ -330,6 +329,6 @@ elif page == "Projects":
                 projects_df = pd.concat([projects_df, pd.DataFrame([new_row])], ignore_index=True)
                 save_projects(projects_df)
                 st.success(f"Project '{new_proj_name}' added!")
-
-                # Limpar lista de experimentos após salvar
+                # Resetar lista de experimentos para novo projeto
                 st.session_state.new_proj_exp_list = []
+                st.experimental_rerun()
