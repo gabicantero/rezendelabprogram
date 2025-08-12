@@ -212,7 +212,7 @@ elif page == "Projects":
 
     for idx, row in projects_df.iterrows():
         with st.expander(f"📂 {row['Project']}"):
-        st.write(f"**Description:** {row['Description']}")
+            st.write(f"**Description:** {row['Description']}")
 
         # Pega colunas de experimentos daquele projeto
         exp_cols = [c for c in projects_df.columns if c.startswith("Exp") and "Name" in c]
