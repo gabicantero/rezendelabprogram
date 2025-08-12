@@ -206,71 +206,40 @@ elif page == "Cages":
                 st.session_state.show_edit = False
 
 # ====== Página Projects ======
-import streamlit as st
-import pandas as pd
-import datetime
+elif page == "Projects":
 
-def load_projects():
-    # aqui você carrega seus projetos (ex: de um CSV)
-    # exemplo simplificado:
-    try:
-        df = pd.read_csv("projects.csv")
-    except FileNotFoundError:
-        df = pd.DataFrame(columns=["Project", "Description"])
-    return df
+    st.subheader("📁 Projects")
 
-def save_projects(df):
-    df.to_csv("projects.csv", index=False)
-
-# Inicializa dataframe no session_state
-if "projects_df" not in st.session_state:
-    st.session_state.projects_df = load_projects()
-
-projects_df = st.session_state.projects_df
-
-st.subheader("📁 Projects")
-
-# Mostrar projetos existentes e tracker
-for idx, row in projects_df.iterrows():
+    for idx, row in projects_df.iterrows():
     with st.expander(f"📂 {row['Project']}"):
-        new_name = st.text_input("Project Name", value=row["Project"], key=f"proj_name_{idx}")
-        new_desc = st.text_area("Description", value=row.get("Description", ""), key=f"desc_{idx}")
+        st.write(f"**Description:** {row['Description']}")
 
+        # Pega colunas de experimentos daquele projeto
         exp_cols = [c for c in projects_df.columns if c.startswith("Exp") and "Name" in c]
         exp_nums = sorted([int(c.replace("Exp", "").replace("Name", "").strip()) for c in exp_cols])
 
         done_count = 0
         total_count = len(exp_nums)
-        exp_names = []
-        exp_dates = []
-        exp_dones = []
 
         for num in exp_nums:
             name_col = f"Exp{num} Name"
             date_col = f"Exp{num} Date"
             done_col = f"Exp{num} Done"
 
+            # Inicializa colunas 'Done' se não existir
             if done_col not in projects_df.columns:
                 projects_df[done_col] = False
 
-            exp_name = st.text_input(f"Experiment {num} Name", value=row.get(name_col, ""), key=f"exp_name_{idx}_{num}")
+            exp_name = row.get(name_col, "")
+            exp_date = row.get(date_col, "")
 
-            exp_date_str = row.get(date_col, "")
-            try:
-                exp_date = pd.to_datetime(exp_date_str).date() if exp_date_str else None
-            except:
-                exp_date = None
-            exp_date = st.date_input(f"Planned Date for Experiment {num}", value=exp_date if exp_date else datetime.datetime.today().date(), key=f"exp_date_{idx}_{num}")
-
-            exp_done = st.checkbox("Done", value=bool(row.get(done_col, False)), key=f"exp_done_{idx}_{num}")
+            exp_done = st.checkbox(f"{exp_name} ({exp_date})", value=bool(row.get(done_col, False)), key=f"done_{idx}_{num}")
 
             if exp_done:
                 done_count += 1
+            projects_df.at[idx, done_col] = exp_done
 
-            exp_names.append(exp_name)
-            exp_dates.append(exp_date)
-            exp_dones.append(exp_done)
-
+        # Tracker visual
         percent_done = int((done_count / total_count) * 100) if total_count > 0 else 0
         if percent_done == 100:
             color = "green"
@@ -282,74 +251,57 @@ for idx, row in projects_df.iterrows():
             color = "red"
 
         st.markdown(f"""
-        <div style='width:100%;background-color:lightgray;border-radius:5px;'>
+        <div style='width:100%;background-color:#ddd;border-radius:5px;'>
             <div style='width:{percent_done}%;background-color:{color};padding:5px;border-radius:5px;text-align:center;'>
                 {percent_done}%
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button("Save Changes", key=f"save_proj_{idx}"):
-            projects_df.at[idx, "Project"] = new_name
-            projects_df.at[idx, "Description"] = new_desc
-            for i, num in enumerate(exp_nums):
-                projects_df.at[idx, f"Exp{num} Name"] = exp_names[i]
-                projects_df.at[idx, f"Exp{num} Date"] = exp_dates[i].strftime("%Y-%m-%d") if exp_dates[i] else ""
-                projects_df.at[idx, f"Exp{num} Done"] = exp_dones[i]
+# --- Adicionar novo projeto ---
+st.markdown("---")
+st.write("### Add New Project")
+
+with st.form("add_project_form"):
+    new_proj_name = st.text_input("Project Name")
+    new_proj_desc = st.text_area("Project Description")
+
+    # Botão para adicionar experimentos dinamicamente
+    add_exp = st.button("Add Experiment")
+
+    if add_exp:
+        st.session_state.new_exp_count += 1
+
+    exp_names = []
+    exp_dates = []
+    for i in range(1, st.session_state.new_exp_count + 1):
+        exp_names.append(st.text_input(f"Experiment {i} Name", key=f"new_exp_name_{i}"))
+        exp_dates.append(st.text_input(f"Planned Date for Experiment {i} (YYYY-MM-DD)", key=f"new_exp_date_{i}"))
+
+    submitted = st.form_submit_button("Add Project")
+
+    if submitted:
+        if new_proj_name.strip() == "":
+            st.error("Project name cannot be empty.")
+        elif new_proj_name in projects_df["Project"].values:
+            st.error("Project with this name already exists.")
+        else:
+            new_row = {
+                "Project": new_proj_name,
+                "Description": new_proj_desc
+            }
+            for i in range(1, st.session_state.new_exp_count + 1):
+                new_row[f"Exp{i} Name"] = exp_names[i - 1]
+                new_row[f"Exp{i} Date"] = exp_dates[i - 1]
+                new_row[f"Exp{i} Done"] = False
+
+            projects_df = pd.concat([projects_df, pd.DataFrame([new_row])], ignore_index=True)
             save_projects(projects_df)
-            st.success("Project updated!")
+            st.success(f"Project '{new_proj_name}' added!")
+            # Resetar contador de experimentos para o próximo projeto
+            st.session_state.new_exp_count = 1
+            st.experimental_rerun()  # Recarrega app para atualizar
 
-# Controle para mostrar form de adicionar projeto
-if "show_add_project_form" not in st.session_state:
-    st.session_state.show_add_project_form = False
-if "new_proj_exp_list" not in st.session_state:
-    st.session_state.new_proj_exp_list = []
 
-if st.button("Add New Project"):
-    st.session_state.show_add_project_form = not st.session_state.show_add_project_form
+# Mostrar projetos existentes e tracker
 
-if st.session_state.show_add_project_form:
-    with st.form("add_project_form"):
-        new_proj_name = st.text_input("Project Name")
-        new_proj_desc = st.text_area("Project Description")
-
-        add_exp = st.form_submit_button("+ Add Experiment")
-        if add_exp:
-            st.session_state.new_proj_exp_list.append({"name": "", "date": ""})
-
-        for i, exp in enumerate(st.session_state.new_proj_exp_list):
-            exp_name = st.text_input(f"Experiment {i+1} Name", value=exp.get("name", ""), key=f"new_exp_name_{i}")
-            exp_date = st.text_input(f"Planned Date for Experiment {i+1} (YYYY-MM-DD)", value=exp.get("date", ""), key=f"new_exp_date_{i}")
-
-            st.session_state.new_proj_exp_list[i]["name"] = exp_name
-            st.session_state.new_proj_exp_list[i]["date"] = exp_date
-
-        submit_new_proj = st.form_submit_button("Add Project")
-        if submit_new_proj:
-            if new_proj_name.strip() == "":
-                st.error("Project name cannot be empty.")
-            elif new_proj_name in projects_df["Project"].values:
-                st.error("Project with this name already exists.")
-            elif len(st.session_state.new_proj_exp_list) == 0:
-                st.error("Add at least one experiment.")
-            else:
-                new_row = {
-                    "Project": new_proj_name,
-                    "Description": new_proj_desc,
-                }
-                for i, exp in enumerate(st.session_state.new_proj_exp_list, 1):
-                    new_row[f"Exp{i} Name"] = exp["name"]
-                    new_row[f"Exp{i} Date"] = exp["date"]
-                    new_row[f"Exp{i} Done"] = False
-
-                st.session_state.projects_df = pd.concat([projects_df, pd.DataFrame([new_row])], ignore_index=True)
-                save_projects(st.session_state.projects_df)
-                st.success(f"Project '{new_proj_name}' added!")
-
-                # Resetar lista e esconder form
-                st.session_state.new_proj_exp_list = []
-                st.session_state.show_add_project_form = False
-
-# Atualiza projects_df depois de salvar para manter sincronizado
-projects_df = st.session_state.projects_df
-            
