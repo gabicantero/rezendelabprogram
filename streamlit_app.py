@@ -1,411 +1,325 @@
 import streamlit as st
 import pandas as pd
 import datetime
-import json
-from pathlib import Path
 
-# ---------------------------
-# Config e arquivos
-# ---------------------------
 st.set_page_config(page_title="Rat Cage Manager", layout="wide")
+st.title("Animal Cage Manager")
 
-ANIMALS_FILE = "animals.csv"
-PROJECTS_FILE = "projects.csv"
-
-# ---------------------------
-# Funções utilitárias I/O
-# ---------------------------
-def load_animals():
-    cols = ["ID","Project","Cage","DOB","Sex","Pregnant?","Notes",
-            "Next Experiment","Breeder or Experimental?","Experiment Date",
-            "Expected DOB Puppies","Real DOB Puppies","Weaning Date","Milking Days Done"]
-    p = Path(ANIMALS_FILE)
-    if not p.exists():
+# ====== Funções para carregar/salvar dados ======
+def load_data():
+    try:
+        return pd.read_csv("rat_data.csv")
+    except FileNotFoundError:
+        cols = ["ID", "Project", "Cage", "DOB", "Sex", "Pregnant?", "Notes",
+                "Next Experiment", "Experiment Date", "Expected DOB Puppies",
+                "Real DOB Puppies", "Weaning Date", "Milking Days Done"]
         return pd.DataFrame(columns=cols)
-    df = pd.read_csv(ANIMALS_FILE)
-    # garantir colunas
-    for c in cols:
-        if c not in df.columns:
-            df[c] = pd.NA
-    return df[cols]
-
-def save_animals(df):
-    df.to_csv(ANIMALS_FILE, index=False)
 
 def load_projects():
-    cols = ["Name","Description","Num_Experiments","Experiments"]  # Experiments será JSON string
-    p = Path(PROJECTS_FILE)
-    if not p.exists():
-        return pd.DataFrame(columns=cols)
-    df = pd.read_csv(PROJECTS_FILE)
-    for c in cols:
-        if c not in df.columns:
-            df[c] = pd.NA
-    return df[cols]
+    try:
+        df = pd.read_csv("projects.csv")
+        if df.empty:
+            df = pd.DataFrame(columns=["Project", "Description", "Paper Written?", "Paper Submitted?", "Journal Name", "Paper Link"])
+        return df
+    except FileNotFoundError:
+        return pd.DataFrame(columns=["Project", "Description", "Paper Written?", "Paper Submitted?", "Journal Name", "Paper Link"])
+
+def save_data(df):
+    df.to_csv("rat_data.csv", index=False)
 
 def save_projects(df):
-    df.to_csv(PROJECTS_FILE, index=False)
+    df.to_csv("projects.csv", index=False)
 
-# ---------------------------
-# Carregar dados iniciais
-# ---------------------------
-animals_df = load_animals()
+# ====== Carrega dados ======
+data = load_data()
 projects_df = load_projects()
-projects_list = list(projects_df["Name"].dropna().unique())
 
-# ---------------------------
-# Helper: barra de progresso colorida
-# ---------------------------
-def colored_progress(percent: int):
-    # percent: 0..100
-    if percent >= 100:
-        color = "#006400"   # dark green
-    elif percent >= 75:
-        color = "#32CD32"   # light green
-    elif percent >= 50:
-        color = "#FFD700"   # yellow/gold
-    else:
-        color = "#FF4B4B"   # red
-    # html bar
-    html = f"""
-    <div style="width:100%;background:#eee;border-radius:6px;padding:3px">
-      <div style="width:{percent}%;background:{color};height:18px;border-radius:4px;text-align:center;color:#fff;font-weight:600">
-        {percent}%
-      </div>
-    </div>
-    """
-    st.markdown(html, unsafe_allow_html=True)
+# ====== Lista de projetos para seleção (Add Animal, Cages) ======
+projects_list = list(projects_df["Project"].unique())
+if not projects_list:
+    projects_list = ["No Projects Yet"]
 
-# ---------------------------
-# Estado da sessão para formulários dinâmicos
-# ---------------------------
-if "show_add_project_form" not in st.session_state:
-    st.session_state.show_add_project_form = False
-if "new_proj_num_exp" not in st.session_state:
-    st.session_state.new_proj_num_exp = 1
-if "new_proj_experiments" not in st.session_state:
-    st.session_state.new_proj_experiments = [{"name": "", "date": datetime.date.today()}]
-if "view_cage" not in st.session_state:
-    st.session_state.view_cage = None
+# ====== Menu lateral ======
+page = st.sidebar.selectbox("Navigation", ["Home", "Add Animal", "Cages", "Projects"])
 
-# ---------------------------
-# Menu principal (ordem solicitada)
-# ---------------------------
-page = st.sidebar.radio("Menu", ["Add Animal", "Cages", "Projects"])
+# ====== Página Home ======
+if page == "Home":
+    st.subheader("Welcome to the Rezende's Lab Animal Manager App!")
+    st.markdown("Use the sidebar to navigate between pages.")
 
-# ===========================
-# PAGE: Add Animal
-# ===========================
-if page == "Add Animal":
-    st.title("🐭 Add a New Animal")
+# ====== Página Add Animal ======
+elif page == "Add Animal":
+    st.subheader("Add a New Animal")
 
-    # If no projects yet, show a warning but allow adding (you can type project as "No Project Yet")
-    project_options = projects_list if projects_list else ["No Projects Yet"]
+    id = st.text_input("Animal ID")
+    project = st.selectbox("Project", projects_list)
+    cage = st.text_input("Cage Number")
+    dob = st.date_input("Date of Birth")
+    sex = st.selectbox("Sex", ["Male", "Female"])
+    pregnancy = st.selectbox("Pregnant?", ["No", "Yes"])
+    notes = st.text_area("Notes")
+    next_action = st.text_input("Next Experiment")
+    bree_expe = st.selectbox("Breeder or Experimental?", ["Breeder", "Experimental","None"])
 
-    with st.form("add_animal_form", clear_on_submit=False):
-        id_ = st.text_input("Animal ID")
-        project = st.selectbox("Project", project_options)
-        cage = st.text_input("Cage Number")
-        dob = st.date_input("Date of Birth", datetime.date.today())
-        sex = st.selectbox("Sex", ["Male", "Female"])
-        pregnancy = st.selectbox("Pregnant?", ["No", "Yes"])
-        notes = st.text_area("Notes")
-        next_action = st.text_input("Next Experiment")
-        bree_expe = st.selectbox("Breeder or Experimental?", ["Breeder", "Experimental", "None"])
+    add_exp_date = st.checkbox("Add Experiment Date?")
+    action_date = None
+    if add_exp_date:
+        action_date = st.date_input("Experiment Date")
 
-        add_exp_date = st.checkbox("Add Experiment Date?")
-        action_date = None
-        if add_exp_date:
-            action_date = st.date_input("Experiment Date", datetime.date.today())
+    edbp = rdbp = weaning = None
+    if pregnancy == "Yes":
+        edbp = st.date_input("Expected Date of Birth of the Puppies")
+        rdbp = st.date_input("Real Date of Birth of the Puppies")
+        weaning = st.date_input("Date of Weaning")
 
-        edbp = rdbp = weaning = None
-        if pregnancy == "Yes":
-            edbp = st.date_input("Expected Date of Birth of the Puppies", datetime.date.today())
-            rdbp = st.date_input("Real Date of Birth of the Puppies", datetime.date.today())
-            weaning = st.date_input("Date of Weaning", datetime.date.today())
+    milk_done = []
+    if next_action.lower() == "milking":
+        milk_days = ['1','2','3','4','5', '6','7','8', '9','10','11', '12','13','14', '15','16' '17','18','19','20' '21']
+        milk_done = st.multiselect("Milking days done", milk_days)
 
-        milk_done = []
-        if next_action.strip().lower() == "milking":
-            milk_days = [str(d) for d in range(1,22)]
-            milk_done = st.multiselect("Milking days done", milk_days)
+    if st.button("Add Animal"):
+        new_row = {
+            "ID": id,
+            "Project": project,
+            "Cage": cage,
+            "DOB": dob,
+            "Sex": sex,
+            "Pregnant?": pregnancy,
+            "Notes": notes,
+            "Next Experiment": next_action,
+            "Breeder or Experimental?": bree_expe,
+            "Experiment Date": action_date,
+            "Expected DOB Puppies": edbp,
+            "Real DOB Puppies": rdbp,
+            "Weaning Date": weaning,
+            "Milking Days Done": ",".join(milk_done) if milk_done else None
+        }
+        data = pd.concat([data, pd.DataFrame([new_row])], ignore_index=True)
+        save_data(data)
+        st.success(f"Animal {id} added successfully!")
+        # Atualiza lista de projetos
+        if project not in projects_list:
+            projects_list.append(project)
 
-        submitted = st.form_submit_button("Add Animal")
-        if submitted:
-            if id_.strip() == "":
-                st.error("Animal ID cannot be empty.")
-            else:
-                new_row = {
-                    "ID": id_,
-                    "Project": project,
-                    "Cage": cage,
-                    "DOB": dob.isoformat() if isinstance(dob, datetime.date) else dob,
-                    "Sex": sex,
-                    "Pregnant?": pregnancy,
-                    "Notes": notes,
-                    "Next Experiment": next_action,
-                    "Breeder or Experimental?": bree_expe,
-                    "Experiment Date": action_date.isoformat() if isinstance(action_date, datetime.date) else (action_date if action_date else ""),
-                    "Expected DOB Puppies": edbp.isoformat() if isinstance(edbp, datetime.date) else (edbp if edbp else ""),
-                    "Real DOB Puppies": rdbp.isoformat() if isinstance(rdbp, datetime.date) else (rdbp if rdbp else ""),
-                    "Weaning Date": weaning.isoformat() if isinstance(weaning, datetime.date) else (weaning if weaning else ""),
-                    "Milking Days Done": ",".join(milk_done) if milk_done else ""
-                }
-                animals_df = pd.concat([animals_df, pd.DataFrame([new_row])], ignore_index=True)
-                save_animals(animals_df)
-                st.success(f"Animal {id_} added successfully!")
-                # atualizar lista de projetos display se necessário
-                if project not in projects_list:
-                    projects_list.append(project)
-
-# ===========================
-# PAGE: Cages
-# ===========================
+# ====== Página Cages ======
 elif page == "Cages":
-    st.title("🔲 Cage Overview")
+    st.subheader("🔲 Cage Overview")
 
-    if animals_df.empty:
+    if data.empty:
         st.info("No animals registered yet.")
     else:
-        # filtro por projeto
-        proj_options = ["All"] + (projects_list if projects_list else ["No Projects Yet"])
-        selected_project = st.selectbox("Filter by project", proj_options)
+        filter_projects = ["All"] + projects_list
+        selected_project = st.selectbox("Filter by project", filter_projects)
 
-        # subfiltro por tipo (multi)
-        type_options = ["Breeder", "Experimental", "None"]
-        selected_types = st.multiselect("Filter by Type (choose any)", type_options, default=type_options)
-
-        # filtrar animais de acordo
-        filtered = animals_df.copy()
-        if selected_project != "All":
-            filtered = filtered[filtered["Project"] == selected_project]
-        filtered = filtered[filtered["Breeder or Experimental?"].isin(selected_types)]
-
-        # montar tabela de cages agregada
-        cages_summary = []
-        cage_ids = filtered["Cage"].fillna("").unique().tolist()
-        for c in cage_ids:
-            if c == "" or pd.isna(c):
-                continue
-            cage_animals = filtered[filtered["Cage"] == c]
-            total = len(cage_animals)
-            males = len(cage_animals[cage_animals["Sex"] == "Male"])
-            females = len(cage_animals[cage_animals["Sex"] == "Female"])
-            # definir tipo da cage (priorizar Breeder se houver)
-            types_present = cage_animals["Breeder or Experimental?"].unique().tolist()
-            if "Breeder" in types_present:
-                cage_type = "Breeder"
-            elif "Experimental" in types_present:
-                cage_type = "Experimental"
-            else:
-                cage_type = "None"
-            cages_summary.append({"Cage": c, "Total Animals": total, "Males": males, "Females": females, "Type": cage_type})
-
-        cages_table = pd.DataFrame(cages_summary)
-        if cages_table.empty:
-            st.info("No matching cages found for selected filters.")
+        if selected_project == "All":
+            filtered_data = data.copy()
         else:
-            st.dataframe(cages_table)
+            filtered_data = data[data["Project"] == selected_project]
 
-            # Botões para ver animais em cada cage (usa session_state para lembrar qual foi solicitado)
-            for row in cages_summary:
-                c = row["Cage"]
-                if st.button(f"See animals in {c}", key=f"see_{c}"):
-                    st.session_state.view_cage = c
+        st.write("### Animals in project:")
+        st.dataframe(filtered_data[["ID", "Cage", "Sex", "Breeder or Experimental?", "DOB", "Next Experiment"]])
 
-            if st.session_state.view_cage:
-                st.markdown("---")
-                st.write(f"### Animals in cage `{st.session_state.view_cage}`")
-                cage_animals = filtered[filtered["Cage"] == st.session_state.view_cage]
-                if cage_animals.empty:
-                    st.write("No animals in this cage (with current filters).")
-                else:
-                    st.dataframe(cage_animals)
+        selected_animal_index = st.selectbox(
+            "Select an animal to edit",
+            filtered_data.index,
+            format_func=lambda x: f"{filtered_data.loc[x, 'ID']} - Cage {filtered_data.loc[x, 'Cage']}"
+        )
 
-# ===========================
-# PAGE: Projects
-# ===========================
-elif page == "Projects":
-    st.title("📂 Projects")
+        if "show_edit" not in st.session_state:
+            st.session_state.show_edit = False
 
-    # Botão para abrir/fechar form de adicionar novo projeto
-    if st.button("Add Project"):
-        st.session_state.show_add_project_form = not st.session_state.show_add_project_form
+        if st.button("Edit selected animal info"):
+            st.session_state.show_edit = not st.session_state.show_edit
 
-    # Formulário dinâmico (aparece só se toggled)
-    if st.session_state.show_add_project_form:
-        with st.form("add_project_form", clear_on_submit=False):
-            proj_name = st.text_input("Project Name")
-            proj_desc = st.text_area("Description")
+        if st.session_state.show_edit:
+            row = filtered_data.loc[selected_animal_index]
+            with st.form("edit_animal"):
+                id = st.text_input("Animal ID", value=row["ID"])
+                project = st.selectbox("Project", projects_list, index=projects_list.index(row["Project"]) if row["Project"] in projects_list else 0)
+                cage = st.text_input("Cage Number", value=row["Cage"])
+                dob = st.date_input("Date of Birth", pd.to_datetime(row["DOB"]))
+                sex = st.selectbox("Sex", ["Male", "Female"], index=0 if row["Sex"] == "Male" else 1)
+                pregnancy = st.selectbox("Pregnant?", ["No", "Yes"], index=0 if row["Pregnant?"] == "No" else 1)
+                notes = st.text_area("Notes", value=row["Notes"])
+                next_action = st.text_input("Next Experiment", value=row["Next Experiment"])
+                bree_expe - st.selectbox("Breeder or Experimental", ["Breeder","Experimental","None"], index=0 if row["Breeder or Experimental"] == "Breeder" else 1)
 
-            # número dinâmico de experiments
-            num_exp = st.number_input("Number of Experiments", min_value=1, step=1, value=st.session_state.new_proj_num_exp)
-            # ajustar sessão
-            if num_exp != st.session_state.new_proj_num_exp:
-                # redimensionar lista experiments
-                if num_exp > st.session_state.new_proj_num_exp:
-                    # adicionar vazios
-                    for _ in range(int(num_exp) - int(st.session_state.new_proj_num_exp)):
-                        st.session_state.new_proj_experiments.append({"name": "", "date": datetime.date.today()})
-                else:
-                    # truncar
-                    st.session_state.new_proj_experiments = st.session_state.new_proj_experiments[:int(num_exp)]
-                st.session_state.new_proj_num_exp = int(num_exp)
-
-            # garantir tamanho correto
-            if len(st.session_state.new_proj_experiments) != int(st.session_state.new_proj_num_exp):
-                st.session_state.new_proj_experiments = [{"name": "", "date": datetime.date.today()} for _ in range(int(st.session_state.new_proj_num_exp))]
-
-            # mostrar campos dinamicamente
-            for i in range(int(st.session_state.new_proj_num_exp)):
-                st.session_state.new_proj_experiments[i]["name"] = st.text_input(f"Experiment {i+1} Name", value=st.session_state.new_proj_experiments[i]["name"], key=f"np_name_{i}")
-                # usar date_input com default datetime.date
-                dt_val = st.session_state.new_proj_experiments[i]["date"]
-                if not isinstance(dt_val, datetime.date):
+                add_exp_date = st.checkbox("Add Experiment Date?", value=pd.notnull(row["Experiment Date"]))
+                action_date = None
+                if add_exp_date:
                     try:
-                        dt_val = datetime.date.fromisoformat(str(dt_val))
+                        action_date = pd.to_datetime(row["Experiment Date"])
                     except:
-                        dt_val = datetime.date.today()
-                st.session_state.new_proj_experiments[i]["date"] = st.date_input(f"Experiment {i+1} Date", value=dt_val, key=f"np_date_{i}")
+                        action_date = None
+                    action_date = st.date_input("Experiment Date", value=action_date)
+                
+                edbp = rdbp = weaning = None
+                if pregnancy == "Yes":
+                    try:
+                        edbp = pd.to_datetime(row["Expected DOB Puppies"])
+                    except:
+                        edbp = None
+                    try:
+                        rdbp = pd.to_datetime(row["Real DOB Puppies"])
+                    except:
+                        rdbp = None
+                    try:
+                        weaning = pd.to_datetime(row["Weaning Date"])
+                    except:
+                        weaning = None
 
-            add_submit = st.form_submit_button("Save Project")
-            if add_submit:
-                # validações básicas
-                if proj_name.strip() == "":
+                    edbp = st.date_input("Expected Date of Birth of the Puppies", value=edbp)
+                    rdbp = st.date_input("Real Date of Birth of the Puppies", value=rdbp)
+                    weaning = st.date_input("Date of Weaning", value=weaning)
+
+                milk_done = []
+                if next_action.lower() == "milking":
+                    milk_days = ['3', '6', '9', '12', '15', '17', '21']
+                    milk_done_str = str(row.get("Milking Days Done", ""))
+                    milk_done = milk_done_str.split(",") if milk_done_str else []
+                    milk_done = st.multiselect("Milking days done", milk_days, default=milk_done)
+
+                save_changes = st.form_submit_button("Save Changes")
+                if save_changes:
+                    data.loc[selected_animal_index] = [
+                        id, project, cage, dob, sex, pregnancy, notes,
+                        next_action, bree_expe, action_date, edbp, rdbp, weaning,
+                        ",".join(milk_done) if milk_done else None
+                    ]
+                    save_data(data)
+                    st.success("Animal updated successfully!")
+                    st.session_state.show_edit = False
+
+            if st.button("Delete Animal"):
+                data = data.drop(selected_animal_index)
+                save_data(data)
+                st.warning("Animal deleted successfully!")
+                st.session_state.show_edit = False
+
+# ====== Página Projects ======
+elif page == "Projects":
+    st.subheader("📁 Projects")
+
+    # Controle para mostrar formulário de novo projeto
+    if "show_add_proj" not in st.session_state:
+        st.session_state.show_add_proj = False
+
+    if st.button("Add New Project"):
+        st.session_state.show_add_proj = not st.session_state.show_add_proj
+
+    # Mostrar formulário só se ativado
+    if st.session_state.show_add_proj:
+        with st.form("add_project_form"):
+            new_proj_name = st.text_input("Project Name")
+            new_proj_desc = st.text_area("Project Description")
+            n_exp = st.number_input("Number of Experiments", min_value=1, max_value=10, value=3, step=1)
+
+            new_exp_names = []
+            new_exp_dates = []
+            for i in range(1, n_exp + 1):
+                new_exp_names.append(st.text_input(f"Experiment {i} Name", key=f"new_exp_name_{i}"))
+                new_exp_dates.append(st.date_input(f"Planned Date for Experiment {i}", value=datetime.datetime.today().date(), key=f"new_exp_date_{i}"))
+
+            submit_new_proj = st.form_submit_button("Add Project")
+
+            if submit_new_proj:
+                if new_proj_name.strip() == "":
                     st.error("Project name cannot be empty.")
+                elif new_proj_name in projects_df["Project"].values:
+                    st.error("Project with this name already exists.")
                 else:
-                    # construir experiments list com done=False iniciais
-                    exps = []
-                    for e in st.session_state.new_proj_experiments:
-                        exps.append({"name": e["name"], "date": e["date"].isoformat(), "done": False})
                     new_row = {
-                        "Name": proj_name,
-                        "Description": proj_desc,
-                        "Num_Experiments": int(st.session_state.new_proj_num_exp),
-                        "Experiments": json.dumps(exps)
+                        "Project": new_proj_name,
+                        "Description": new_proj_desc,
+                        "Paper Written?": False,
+                        "Paper Submitted?": False,
+                        "Journal Name": "",
+                        "Paper Link": ""
                     }
+                    for i in range(1, n_exp + 1):
+                        new_row[f"Exp{i} Name"] = new_exp_names[i - 1]
+                        new_row[f"Exp{i} Date"] = new_exp_dates[i - 1].strftime("%Y-%m-%d")
+                        new_row[f"Exp{i} Done"] = False
+
                     projects_df = pd.concat([projects_df, pd.DataFrame([new_row])], ignore_index=True)
                     save_projects(projects_df)
-                    # atualizar lista local e limpar formulário da sessão
-                    projects_list = list(projects_df["Name"].dropna().unique())
-                    st.session_state.new_proj_experiments = [{"name": "", "date": datetime.date.today()}]
-                    st.session_state.new_proj_num_exp = 1
-                    st.session_state.show_add_project_form = False
-                    st.success(f"Project '{proj_name}' added!")
-                    # reload projects_df para refletir imediatamente
-                    projects_df = load_projects()
-                    projects_list = list(projects_df["Name"].dropna().unique())
+                    st.success(f"Project '{new_proj_name}' added!")
+                    st.session_state.show_add_proj = False
+                    projects_list.append(new_proj_name)  # Atualiza lista de projetos
 
-    # Mostrar todos os projetos salvos com edição/checkbox e tracker
-    if projects_df.empty:
-        st.info("No projects yet. Click 'Add Project' to create one.")
-    else:
-        # percorre por índice para sabermos onde salvar
-        for idx, row in projects_df.reset_index(drop=True).iterrows():
-            name = row["Name"]
-            desc = row["Description"] if pd.notna(row["Description"]) else ""
-            st.subheader(f"{name}")
-            st.write(desc)
+    # Mostrar projetos existentes com possibilidade de editar
+    for idx, row in projects_df.iterrows():
+        with st.expander(f"📂 {row['Project']}"):
 
-            # carregar experiments json
-            exps = []
-            try:
-                exps = json.loads(row["Experiments"]) if pd.notna(row["Experiments"]) and row["Experiments"] != "" else []
-            except Exception:
-                exps = []
+            new_name = st.text_input("Project Name", value=row["Project"], key=f"proj_name_{idx}")
+            new_desc = st.text_area("Description", value=row.get("Description", ""), key=f"desc_{idx}")
 
-            if not exps:
-                st.info("No experiments defined for this project.")
-            else:
-                # Mostrar lista de experiments com checkbox — e permitir editar se clicar Edit
-                # Botão editar toggle
-                edit_key = f"edit_proj_{idx}"
-                if edit_key not in st.session_state:
-                    st.session_state[edit_key] = False
-                if st.button("Edit Project", key=f"edit_{idx}"):
-                    st.session_state[edit_key] = not st.session_state[edit_key]
+            # Detecta experimentos
+            exp_nums = []
+            for col in projects_df.columns:
+                if col.startswith("Exp") and "Name" in col:
+                    num = col.replace("Name", "").strip()
+                    exp_nums.append(num)
+            exp_nums = sorted(exp_nums, key=lambda x: int(x))
 
-                # seção de edição (nome/data) ou apenas checkbox/show
-                exp_names = []
-                exp_dates = []
-                exp_dones = []
+            st.markdown("### Experiments")
+            exp_names = []
+            exp_dates = []
+            exp_dones = []
 
-                if st.session_state[edit_key]:
-                    # edição - form para este projeto
-                    with st.form(f"edit_form_{idx}", clear_on_submit=False):
-                        for i, e in enumerate(exps):
-                            # nome e date editáveis
-                            new_name = st.text_input(f"Experiment {i+1} Name", value=e.get("name",""), key=f"proj_{idx}_expname_{i}")
-                            # parse date
-                            try:
-                                dt_val = datetime.date.fromisoformat(e.get("date",""))
-                            except:
-                                dt_val = datetime.date.today()
-                            new_date = st.date_input(f"Experiment {i+1} Date", value=dt_val, key=f"proj_{idx}_expdate_{i}")
-                            done_val = st.checkbox("Done", value=bool(e.get("done", False)), key=f"proj_{idx}_expdone_{i}")
+            for num in exp_nums:
+                exp_name_col = f"Exp{num} Name"
+                exp_date_col = f"Exp{num} Date"
+                exp_done_col = f"Exp{num} Done"
 
-                            exp_names.append(new_name)
-                            exp_dates.append(new_date)
-                            exp_dones.append(done_val)
+                # Criar colunas vazias se não existirem
+                if exp_name_col not in projects_df.columns:
+                    projects_df[exp_name_col] = ""
+                if exp_date_col not in projects_df.columns:
+                    projects_df[exp_date_col] = ""
+                if exp_done_col not in projects_df.columns:
+                    projects_df[exp_done_col] = False
 
-                        save_proj_changes = st.form_submit_button("Save changes")
-                        if save_proj_changes:
-                            # atualizar exps
-                            new_exps = []
-                            for i in range(len(exps)):
-                                new_exps.append({"name": exp_names[i], "date": exp_dates[i].isoformat(), "done": bool(exp_dones[i])})
-                            projects_df.at[idx, "Experiments"] = json.dumps(new_exps)
-                            # também atualizar Num_Experiments e Description se quiser
-                            save_projects(projects_df)
-                            st.success(f"Project '{name}' updated!")
-                            # reload
-                            projects_df = load_projects()
-                else:
-                    # apenas mostrar checkboxes + save progress button
-                    st.write("Experiments:")
-                    for i,e in enumerate(exps):
-                        label = f"{e.get('name','')} ({e.get('date','')})"
-                        done_key = f"proj_{idx}_expdone_view_{i}"
-                        # default from stored 'done'
-                        default_done = bool(e.get("done", False))
-                        checked = st.checkbox(label, value=default_done, key=done_key)
-                        exp_dones.append(checked)
-                        exp_names.append(e.get("name",""))
-                        # parse date for display also
-                        try:
-                            exp_dates.append(datetime.date.fromisoformat(e.get("date","")))
-                        except:
-                            exp_dates.append(None)
+                exp_name = st.text_input(f"Experiment {num} Name", value=row.get(exp_name_col, ""), key=f"exp_name_{idx}_{num}")
 
-                    if st.button("Save progress", key=f"save_progress_{idx}"):
-                        # salvar checked states back into projects_df
-                        new_exps = []
-                        for i,e in enumerate(exps):
-                            new_exps.append({
-                                "name": e.get("name",""),
-                                "date": e.get("date",""),
-                                "done": bool(exp_dones[i])
-                            })
-                        projects_df.at[idx, "Experiments"] = json.dumps(new_exps)
-                        save_projects(projects_df)
-                        st.success("Progress saved.")
-                        # reload
-                        projects_df = load_projects()
-
-                # mostrar tracker colorido com percent feito
-                # recompute exps_from_df to be safe
+                exp_date_str = row.get(exp_date_col, "")
                 try:
-                    exps_after = json.loads(projects_df.at[idx, "Experiments"]) if pd.notna(projects_df.at[idx, "Experiments"]) else []
+                    exp_date = pd.to_datetime(exp_date_str).date() if exp_date_str else None
                 except:
-                    exps_after = exps
-                total = len(exps_after)
-                done = sum(1 for e in exps_after if e.get("done", False))
-                percent = int((done/total)*100) if total>0 else 0
-                colored_progress(percent)
-                # também listar nome + data ao lado do tracker
-                st.write("Experiment list:")
-                for e in exps_after:
-                    st.write(f"- {e.get('name','')} — {e.get('date','')} — {'Done' if e.get('done', False) else 'Pending'}")
+                    exp_date = None
+                exp_date = st.date_input(f"Planned Date for Experiment {num}", value=exp_date if exp_date else datetime.datetime.today().date(), key=f"exp_date_{idx}_{num}")
 
-# ---------------------------
-# Fim do app
-# ---------------------------
+                exp_done = st.checkbox("Done", value=bool(row.get(exp_done_col, False)), key=f"exp_done_{idx}_{num}")
+
+                exp_names.append(exp_name)
+                exp_dates.append(exp_date)
+                exp_dones.append(exp_done)
+
+            # Paper status
+            paper_written = st.checkbox("Paper Written?", value=bool(row.get("Paper Written?", False)), key=f"paper_written_{idx}")
+            paper_submitted = st.checkbox("Paper Submitted?", value=bool(row.get("Paper Submitted?", False)), key=f"paper_submitted_{idx}")
+            journal_name = st.text_input("Journal Name", value=row.get("Journal Name", ""), key=f"journal_name_{idx}")
+            paper_link = st.text_input("Published Paper Link", value=row.get("Paper Link", ""), key=f"paper_link_{idx}")
+
+            # Tracker visual de progresso
+            total_exp = len(exp_nums)
+            done_exp = sum(exp_dones)
+            percent_done = int((done_exp / total_exp) * 100) if total_exp > 0 else 0
+            st.progress(percent_done)
+            st.write(f"Progress: {percent_done}% of experiments done")
+
+            if st.button("Save changes", key=f"save_proj_{idx}"):
+                projects_df.at[idx, "Project"] = new_name
+                projects_df.at[idx, "Description"] = new_desc
+                projects_df.at[idx, "Paper Written?"] = paper_written
+                projects_df.at[idx, "Paper Submitted?"] = paper_submitted
+                projects_df.at[idx, "Journal Name"] = journal_name
+                projects_df.at[idx, "Paper Link"] = paper_link
+                for i, num in enumerate(exp_nums):
+                    projects_df.at[idx, f"Exp{num} Name"] = exp_names[i]
+                    projects_df.at[idx, f"Exp{num} Date"] = exp_dates[i].strftime("%Y-%m-%d") if exp_dates[i] else ""
+                    projects_df.at[idx, f"Exp{num} Done"] = exp_dones[i]
+                save_projects(projects_df)
+                st.success(f"Project '{new_name}' updated!")
+
+
