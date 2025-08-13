@@ -224,19 +224,6 @@ elif page == "Projects":
     projects_df = load_projects()
 
     # Inicializa contador de experimentos para o formulário, se não existir
-    if "new_exp_count" not in st.session_state:
-        st.session_state.new_exp_count = 1
-
-    # Coloque os botões para controlar o número de experimentos AQUI,
-    # antes do formulário, para que o usuário possa clicar antes de preencher
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Add Experiment"):
-            st.session_state.new_exp_count += 1
-    with col2:
-        if st.button("Remove Experiment") and st.session_state.new_exp_count > 1:
-            st.session_state.new_exp_count -= 1
-
 
     # Mostra os projetos existentes com tracker e checkboxes
     for idx, row in projects_df.iterrows():
@@ -293,6 +280,19 @@ elif page == "Projects":
                 </div>
             </div>
             """, unsafe_allow_html=True)
+            
+    if "new_exp_count" not in st.session_state:
+        st.session_state.new_exp_count = 1
+
+    # Coloque os botões para controlar o número de experimentos AQUI,
+    # antes do formulário, para que o usuário possa clicar antes de preencher
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Add Experiment"):
+            st.session_state.new_exp_count += 1
+    with col2:
+        if st.button("Remove Experiment") and st.session_state.new_exp_count > 1:
+            st.session_state.new_exp_count -= 1
 
     # Botão para adicionar experimentos fora do formulário
   
