@@ -102,10 +102,10 @@ elif page == "Add Animal":
             "Cage": cage,
             "DOB": dob,
             "Sex": sex,
+            "Breeder or Experimental?": bree_expe,
             "Pregnant?": pregnancy,
             "Notes": notes,
             "Next Experiment": next_action,
-            "Breeder or Experimental?": bree_expe,
             "Experiment Date": action_date,
             "Expected DOB Puppies": edbp,
             "Real DOB Puppies": rdbp,
@@ -121,7 +121,7 @@ elif page == "Add Animal":
 
 # ====== Página Cages ======
 elif page == "Cages":
-    st.subheader("🔲 Cage Overview")
+    st.subheader("Cage Overview")
 
     if data.empty:
         st.info("No animals registered yet.")
@@ -136,7 +136,15 @@ elif page == "Cages":
         else:
             filtered_data = data[data["Project"] == selected_project]
 
-        st.write("### Animals in project:")
+
+        st.write("### Cages in project:")
+
+        selected_project = st.selectbox("Filter by Project", ["All"] + projects_list)
+
+        if selected_project == "All":
+            filtered_data = data
+        else:
+            filtered_data = data[data["Project"] == selected_project]
         st.dataframe(filtered_data[["ID", "Cage", "Sex", "Breeder or Experimental?", "DOB", "Next Experiment"]])
 
         selected_animal_index = st.selectbox(
@@ -218,128 +226,17 @@ elif page == "Cages":
 
 # ====== Página Projects ======
 elif page == "Projects":
-    st.subheader("📁 Projects")
+    st.subheader("📋 Project List")
 
-    # Recarrega os projetos para garantir dados atualizados
-    projects_df = load_projects()
+    st.write(pd.DataFrame({"Project": projects_list}))
 
-    # Inicializa contador de experimentos para o formulário, se não existir
+    new_project = st.text_input("Add a new project")
+    if new_project:
+        if new_project not in projects_list:
+            projects_list.append(new_project)
+            pd.DataFrame({"Project": projects_list}).to_csv("projects.csv", index=False)
+            st.success(f"Project '{new_project}' added successfully!")
+        else:
+            st.warning("Project already exists.")
 
-    # Mostra os projetos existentes com tracker e checkboxes
-    for idx, row in projects_df.iterrows():
-        with st.expander(f"📂 {row['Project']}"):
-            st.write(f"**Description:** {row.get('Description', '')}")
-
-            # Detecta colunas de experimentos para o projeto
-            exp_cols = [c for c in projects_df.columns if c.startswith("Exp") and "Name" in c]
-            exp_nums = sorted([int(c.replace("Exp", "").replace("Name", "").strip()) for c in exp_cols])
-
-            done_count = 0
-            total_count = len(exp_nums)
-
-            for num in exp_nums:
-                name_col = f"Exp{num} Name"
-                date_col = f"Exp{num} Date"
-                done_col = f"Exp{num} Done"
-
-                # Se coluna Done não existir, cria e preenche com False
-                if done_col not in projects_df.columns:
-                    projects_df[done_col] = False
-
-                exp_name = row.get(name_col, "")
-                exp_date = row.get(date_col, "")
-
-                # Checkbox para marcar experimento como feito
-                exp_done = st.checkbox(
-                    f"{exp_name} ({exp_date})",
-                    value=bool(row.get(done_col, False)),
-                    key=f"done_{idx}_{num}"
-                )
-
-                # Atualiza valor no dataframe em memória
-                projects_df.at[idx, done_col] = exp_done
-
-                if exp_done:
-                    done_count += 1
-
-            # Barra visual de progresso
-            percent_done = int((done_count / total_count) * 100) if total_count > 0 else 0
-            if percent_done == 100:
-                color = "green"
-            elif percent_done >= 75:
-                color = "lightgreen"
-            elif percent_done >= 50:
-                color = "yellow"
-            else:
-                color = "red"
-
-            st.markdown(f"""
-            <div style='width:100%;background-color:#ddd;border-radius:5px;'>
-                <div style='width:{percent_done}%;background-color:{color};padding:5px;border-radius:5px;text-align:center;'>
-                    {percent_done}%
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-    if "new_exp_count" not in st.session_state:
-        st.session_state.new_exp_count = 1
-
-    # Coloque os botões para controlar o número de experimentos AQUI,
-    # antes do formulário, para que o usuário possa clicar antes de preencher
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Add Experiment"):
-            st.session_state.new_exp_count += 1
-    with col2:
-        if st.button("Remove Experiment") and st.session_state.new_exp_count > 1:
-            st.session_state.new_exp_count -= 1
-
-    # Botão para adicionar experimentos fora do formulário
-  
-    st.markdown("---")
-    st.write("### Add New Project")
-
-    with st.form("add_project_form"):
-        new_proj_name = st.text_input("Project Name")
-        new_proj_desc = st.text_area("Project Description")
-
-        # Renderiza campos para os experimentos conforme contador
-        exp_names = []
-        exp_dates = []
-        for i in range(st.session_state.new_exp_count):
-            exp_names.append(st.text_input(f"Experiment {i+1} Name", key=f"new_exp_name_{i}"))
-            exp_dates.append(st.date_input(f"Planned Date for Experiment {i+1}", key=f"new_exp_date_{i}"))
-
-        submitted = st.form_submit_button("Add Project")
-        
-    if st.button("Add Experiment"):
-        st.session_state.new_exp_count += 1
-
-
-        if submitted:
-            # Validações básicas
-            if new_proj_name.strip() == "":
-                st.error("Project name cannot be empty.")
-            elif new_proj_name in projects_df["Project"].values:
-                st.error("Project with this name already exists.")
-            else:
-                # Monta o novo projeto para salvar
-                new_row = {
-                    "Project": new_proj_name,
-                    "Description": new_proj_desc
-                }
-                for i in range(st.session_state.new_exp_count):
-                    new_row[f"Exp{i+1} Name"] = exp_names[i]
-                    new_row[f"Exp{i+1} Date"] = exp_dates[i].strftime("%Y-%m-%d") if exp_dates[i] else ""
-                    new_row[f"Exp{i+1} Done"] = False
-
-                projects_df = pd.concat([projects_df, pd.DataFrame([new_row])], ignore_index=True)
-                save_projects(projects_df)
-                st.success(f"Project '{new_proj_name}' added!")
-
-                # Reseta o contador e limpa os inputs para próximo projeto
-                st.session_state.new_exp_count = 1
-
-                # Recarrega a página para atualizar a lista e permitir adicionar novos projetos
-                st.experimental_rerun()
 
