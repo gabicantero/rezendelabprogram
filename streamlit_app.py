@@ -224,7 +224,7 @@ elif page == "Projects":
     projects_df = load_projects()
 
     # Inicializa contador de experimentos para o formulário, se não existir
-     if "new_exp_count" not in st.session_state:
+    if "new_exp_count" not in st.session_state:
         st.session_state.new_exp_count = 1
 
     # Coloque os botões para controlar o número de experimentos AQUI,
