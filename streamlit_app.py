@@ -282,9 +282,10 @@ if page == "Projects":
     st.markdown("---")
     st.button("Add New Project")
 
-    with st.button("add_project_form"):
+    with st.form("add_project_form"):
         new_proj_name = st.text_input("Project Name")
         new_proj_desc = st.text_area("Project Description")
+        n_exp = st.number_input("Number of Experiments", min_value=1, max_value=10, value=3, step=1)
 
         new_exp_names = []
         new_exp_dates = []
