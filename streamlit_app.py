@@ -14,7 +14,7 @@ except NameError:
 PROJECTS_PATH = os.path.join(BASE_DIR, "projects.csv")
 DATA_PATH = os.path.join(BASE_DIR, "data.csv")
 
-# ====== Funções para carregar/salvar dados ======
+# Funções para carregar e salvar dados 
 def load_data():
     try:
         return pd.read_csv("rat_data.csv")
@@ -41,31 +41,31 @@ if "new_exp_count" not in st.session_state:
     st.session_state.new_exp_count = 1
 # Carrega os dados no início da página
 
-# Sessão para controlar adicionar experimentos no form
+# Controlar o "adicionar experiments" no form
 if "new_exp_count" not in st.session_state:
     st.session_state.new_exp_count = 1
 
 def save_data(df):
     df.to_csv("rat_data.csv", index=False)
 
-# ====== Carrega dados ======
+# Carregar dados
 data = load_data()
 projects_df = load_projects()
 
-# ====== Lista de projetos para seleção (Add Animal, Cages) ======
+# Lista de projetos para seleção (Add Animal, Cages)
 projects_list = list(projects_df["Project"].unique())
 if not projects_list:
     projects_list = ["No Projects Yet"]
 
-# ====== Menu lateral ======
+# Menu lateral 
 page = st.sidebar.selectbox("Navigation", ["Home", "Add Animal", "Cages", "Projects"])
 
-# ====== Página Home ======
+# Página Home 
 if page == "Home":
     st.subheader("Welcome to the Rezende's Lab Animal Manager App!")
     st.markdown("Use the sidebar to navigate between pages.")
 
-# ====== Página Add Animal ======
+# Página Add Animal
 elif page == "Add Animal":
     st.subheader("Add a New Animal")
 
@@ -119,7 +119,7 @@ elif page == "Add Animal":
         if project not in projects_list:
             projects_list.append(project)
 
-# ====== Página Cages ======
+# Página Cages 
 elif page == "Cages":
     st.subheader("Cage Overview")
 
@@ -224,19 +224,96 @@ elif page == "Cages":
                 st.warning("Animal deleted successfully!")
                 st.session_state.show_edit = False
 
-# ====== Página Projects ======
-elif page == "Projects":
-    st.subheader("📋 Project List")
+# Página Projects 
+if page == "Projects":
+    st.subheader("📁 Projects")
 
-    st.write(pd.DataFrame({"Project": projects_list}))
+    # Mostrar projetos existentes
+    for idx, row in projects_df.iterrows():
+        with st.expander(f"📂 {row['Project']}"):
+            st.write(row["Description"])
 
-    new_project = st.text_input("Add a new project")
-    if new_project:
-        if new_project not in projects_list:
-            projects_list.append(new_project)
-            pd.DataFrame({"Project": projects_list}).to_csv("projects.csv", index=False)
-            st.success(f"Project '{new_project}' added successfully!")
-        else:
-            st.warning("Project already exists.")
+            # Pegar colunas de experimentos
+            exp_cols = [c for c in projects_df.columns if c.startswith("Exp") and "Name" in c]
+            exp_nums = sorted([int(c.replace("Exp", "").replace("Name", "").strip()) for c in exp_cols])
+
+            done_count = 0
+            total_count = len(exp_nums)
+
+            for num in exp_nums:
+                name_col = f"Exp{num} Name"
+                date_col = f"Exp{num} Date"
+                done_col = f"Exp{num} Done"
+
+                if done_col not in projects_df.columns:
+                    projects_df[done_col] = False
+
+                exp_name = projects_df.at[idx, name_col]
+                exp_date = projects_df.at[idx, date_col]
+                exp_done = st.checkbox(f"{exp_name} ({exp_date})", value=bool(row.get(done_col, False)),
+                                       key=f"done_{idx}_{num}")
+
+                if exp_done:
+                    done_count += 1
+                projects_df.at[idx, done_col] = exp_done
+
+            # Calcular progresso
+            percent_done = int((done_count / total_count) * 100) if total_count > 0 else 0
+            if percent_done == 100:
+                color = "green"
+            elif percent_done >= 75:
+                color = "lightgreen"
+            elif percent_done >= 50:
+                color = "yellow"
+            else:
+                color = "red"
+
+            st.markdown(f"""
+            <div style='width:100%;background-color:lightgray;border-radius:5px;'>
+                <div style='width:{percent_done}%;background-color:{color};padding:5px;border-radius:5px;text-align:center;'>
+                    {percent_done}%
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            save_projects(projects_df)
+
+    # Formulário para adicionar novo projeto
+    st.markdown("---")
+    st.button("Add New Project")
+
+    with st.form("add_project_form"):
+        new_proj_name = st.text_input("Project Name")
+        new_proj_desc = st.text_area("Project Description")
+        n_exp = st.number_input("Number of Experiments", min_value=1, max_value=10, value=3, step=1)
+
+        new_exp_names = []
+        new_exp_dates = []
+
+        for i in range(1, n_exp + 1):
+            new_exp_names.append(st.text_input(f"Experiment {i} Name", key=f"new_exp_name_{i}"))
+            new_exp_dates.append(st.text_input(f"Planned Date for Experiment {i} (YYYY-MM-DD)", key=f"new_exp_date_{i}"))
+
+        submit_new_proj = st.form_submit_button("Add Project")
+
+        if submit_new_proj:
+            if new_proj_name.strip() == "":
+                st.error("Project name cannot be empty.")
+            elif new_proj_name in projects_df["Project"].values:
+                st.error("Project with this name already exists.")
+            else:
+                new_row = {
+                    "Project": new_proj_name,
+                    "Description": new_proj_desc
+                }
+                for i in range(1, n_exp + 1):
+                    new_row[f"Exp{i} Name"] = new_exp_names[i - 1]
+                    new_row[f"Exp{i} Date"] = new_exp_dates[i - 1]
+                    new_row[f"Exp{i} Done"] = False
+
+                projects_df = pd.concat([projects_df, pd.DataFrame([new_row])], ignore_index=True)
+                save_projects(projects_df)
+                st.success(f"Project '{new_proj_name}' added!")
+
 
 
