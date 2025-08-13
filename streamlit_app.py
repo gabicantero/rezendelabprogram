@@ -280,7 +280,7 @@ if page == "Projects":
 
     # Formulário para adicionar novo projeto
     st.markdown("---")
-    st.button("Add New Project")
+    st.subheader("Add New Project")
 
     with st.form("add_project_form"):
         new_proj_name = st.text_input("Project Name")
@@ -292,7 +292,7 @@ if page == "Projects":
 
         for i in range(1, n_exp + 1):
             new_exp_names.append(st.text_input(f"Experiment {i} Name", key=f"new_exp_name_{i}"))
-            new_exp_dates.append(st.text_input(f"Planned Date for Experiment {i} (YYYY-MM-DD)", key=f"new_exp_date_{i}"))
+            new_exp_dates.append(st.text_input(f"Planned Date for Starting Experiment {i} (YYYY-MM-DD)", key=f"new_exp_date_{i}"))
 
         submit_new_proj = st.form_submit_button("Add Project")
 
