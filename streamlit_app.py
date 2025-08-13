@@ -282,7 +282,7 @@ if page == "Projects":
     st.markdown("---")
     st.button("Add New Project")
 
-    with st.form("add_project_form"):
+    with st.button("add_project_form"):
         new_proj_name = st.text_input("Project Name")
         new_proj_desc = st.text_area("Project Description")
 
